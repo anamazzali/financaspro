@@ -825,3 +825,94 @@ body {
   z-index: 150;
 }
 .sidebar-overlay.show { display: block; }
+
+/* ================================================
+   GOOGLE SHEETS — Status de Sincronização
+   ================================================ */
+.sync-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-family: Tahoma, sans-serif;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-weight: bold;
+  transition: all 0.3s;
+  margin-left: 8px;
+}
+.sync-status.success  { background: var(--verde-positivo-claro); color: var(--verde-positivo); border: 1px solid var(--verde-claro); }
+.sync-status.warning  { background: #FFF3E0; color: #E65100; border: 1px solid #FFB74D; }
+.sync-status.error    { background: var(--vermelho-claro); color: var(--vermelho); border: 1px solid var(--vermelho); }
+.sync-status.info     { background: #E3F2FD; color: #1565C0; border: 1px solid #90CAF9; }
+.sync-status.local    { background: var(--bege); color: var(--texto-medio); border: 1px solid var(--bege-escuro); }
+
+/* Caixa de configuração Google Sheets */
+.sheets-config-box {
+  background: var(--bege-claro);
+  border: 2px solid var(--verde-claro);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 18px;
+}
+.sheets-config-box .sheets-title {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: var(--verde-escuro);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sheets-url-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.sheets-url-row input {
+  flex: 1;
+  min-width: 200px;
+  padding: 10px 14px;
+  border: 2px solid var(--bege-escuro);
+  border-radius: 9px;
+  font-family: Tahoma, sans-serif;
+  font-size: 0.82rem;
+  background: var(--branco);
+  color: var(--texto-escuro);
+  transition: border-color 0.2s;
+}
+.sheets-url-row input:focus { outline: none; border-color: var(--verde-claro); }
+.btn-sheets {
+  background: var(--verde-medio);
+  color: var(--branco);
+  border: none;
+  padding: 10px 18px;
+  border-radius: 9px;
+  font-family: Tahoma, sans-serif;
+  font-size: 0.82rem;
+  font-weight: bold;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+.btn-sheets:hover { background: var(--verde-escuro); }
+.btn-sync {
+  background: var(--dourado);
+  color: var(--verde-escuro);
+  border: none;
+  padding: 10px 18px;
+  border-radius: 9px;
+  font-family: Tahoma, sans-serif;
+  font-size: 0.82rem;
+  font-weight: bold;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+.btn-sync:hover { background: var(--dourado-claro); }
+.sheets-hint {
+  margin-top: 10px;
+  font-size: 0.78rem;
+  color: var(--texto-medio);
+  line-height: 1.6;
+}
