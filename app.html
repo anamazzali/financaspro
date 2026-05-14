@@ -9,9 +9,7 @@
 </head>
 <body>
 
-<!-- ============================================
-     TELA DE SENHA
-     ============================================ -->
+<!-- TELA DE SENHA -->
 <div id="password-gate">
   <div class="pw-box">
     <span class="pw-logo-icon">💰</span>
@@ -24,14 +22,8 @@
   </div>
 </div>
 
-<!-- ============================================
-     OVERLAY MOBILE
-     ============================================ -->
 <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
-<!-- ============================================
-     APP PRINCIPAL
-     ============================================ -->
 <div id="app">
 
   <!-- SIDEBAR -->
@@ -40,7 +32,6 @@
       💰 FinançasPro
       <small>Controle Financeiro Pessoal</small>
     </div>
-
     <nav class="sidebar-nav">
       <div class="nav-item active" data-view="dashboard">
         <span class="nav-icon">📊</span>
@@ -49,6 +40,10 @@
       <div class="nav-item" data-view="lancamentos">
         <span class="nav-icon">➕</span>
         <span class="nav-label">Lançamentos</span>
+      </div>
+      <div class="nav-item" data-view="cartoes">
+        <span class="nav-icon">💳</span>
+        <span class="nav-label">Cartões</span>
       </div>
       <div class="nav-item" data-view="relatorios">
         <span class="nav-icon">📈</span>
@@ -59,8 +54,7 @@
         <span class="nav-label">Configurações</span>
       </div>
     </nav>
-
-    <div class="sidebar-footer">FinançasPro v1.0 · 2025</div>
+    <div class="sidebar-footer">FinançasPro v2.0 · 2026</div>
   </aside>
 
   <!-- CONTEÚDO PRINCIPAL -->
@@ -68,20 +62,23 @@
 
     <!-- TOPBAR -->
     <div class="topbar">
-      <div style="display:flex;align-items:center;gap:12px">
-        <button class="menu-toggle" id="menu-toggle" title="Abrir menu">☰</button>
-        <h2>Dashboard</h2>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="menu-toggle" id="menu-toggle" title="Abrir menu de navegação">
+          <span class="menu-icon">☰</span>
+          <span class="menu-label">Menu</span>
+        </button>
+        <h2 id="topbar-title">Dashboard</h2>
       </div>
       <div class="topbar-right">
-        <span class="topbar-date" id="topbar-date"></span><span class="sync-status local" id="sync-status">💾 Modo local</span>
+        <span class="topbar-date" id="topbar-date"></span>
+        <span class="sync-status local" id="sync-status">💾 Local</span>
         <button class="btn-logout" onclick="logout()">🚪 Sair</button>
       </div>
     </div>
 
-    <!-- ÁREA DE CONTEÚDO -->
     <div class="content">
 
-      <!-- NAVEGAÇÃO DE MÊS (aparece em todas as views) -->
+      <!-- NAVEGAÇÃO DE MÊS -->
       <div class="month-nav">
         <button id="btn-mes-ant">◀ Anterior</button>
         <span class="month-label" id="mes-label">Carregando...</span>
@@ -93,7 +90,7 @@
            ========================================== -->
       <div class="view active" id="view-dashboard">
 
-        <!-- CARDS -->
+        <!-- CARDS PRINCIPAIS -->
         <div class="cards-grid">
           <div class="card receita">
             <div class="card-label">💚 Total Receitas</div>
@@ -117,6 +114,42 @@
           </div>
         </div>
 
+        <!-- CARDS DE INSIGHTS -->
+        <div class="insights-grid">
+          <div class="insight-card alert">
+            <div class="insight-icon">🏆</div>
+            <div class="insight-body">
+              <div class="insight-label">Maior Gasto do Mês</div>
+              <div class="insight-value" id="insight-maior-cat">—</div>
+              <div class="insight-sub" id="insight-maior-val">Sem despesas</div>
+            </div>
+          </div>
+          <div class="insight-card positive">
+            <div class="insight-icon">💚</div>
+            <div class="insight-body">
+              <div class="insight-label">Maior Receita do Mês</div>
+              <div class="insight-value" id="insight-maior-rec">—</div>
+              <div class="insight-sub" id="insight-maior-rec-val">Sem receitas</div>
+            </div>
+          </div>
+          <div class="insight-card neutral">
+            <div class="insight-icon">📋</div>
+            <div class="insight-body">
+              <div class="insight-label">Total de Lançamentos</div>
+              <div class="insight-value" id="insight-total-lanc">0</div>
+              <div class="insight-sub" id="insight-lanc-sub">no mês atual</div>
+            </div>
+          </div>
+          <div class="insight-card warn">
+            <div class="insight-icon">⚠️</div>
+            <div class="insight-body">
+              <div class="insight-label">Maior Despesa Única</div>
+              <div class="insight-value" id="insight-maior-despesa">—</div>
+              <div class="insight-sub" id="insight-maior-desc">Sem despesas</div>
+            </div>
+          </div>
+        </div>
+
         <!-- GRÁFICOS -->
         <div class="charts-grid">
           <div class="chart-box">
@@ -133,23 +166,32 @@
           </div>
         </div>
 
-        <!-- TABELA DE CATEGORIAS -->
-        <div class="cat-table-box">
-          <h3>📋 Detalhamento de Despesas por Categoria</h3>
-          <div style="overflow-x:auto">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Categoria</th>
-                  <th>Valor</th>
-                  <th>% do Total</th>
-                  <th>Participação</th>
-                </tr>
-              </thead>
-              <tbody id="cat-tbody"></tbody>
-            </table>
+        <!-- TABELAS LADO A LADO -->
+        <div class="dual-table-grid">
+          <div class="cat-table-box">
+            <h3>🔴 Despesas por Categoria</h3>
+            <div style="overflow-x:auto">
+              <table class="data-table">
+                <thead>
+                  <tr><th>Categoria</th><th>Valor</th><th>%</th><th>Participação</th></tr>
+                </thead>
+                <tbody id="cat-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="cat-table-box">
+            <h3>💚 Receitas por Categoria</h3>
+            <div style="overflow-x:auto">
+              <table class="data-table">
+                <thead>
+                  <tr><th>Categoria</th><th>Valor</th><th>%</th><th>Participação</th></tr>
+                </thead>
+                <tbody id="rec-tbody"></tbody>
+              </table>
+            </div>
           </div>
         </div>
+
       </div>
       <!-- /view-dashboard -->
 
@@ -158,66 +200,110 @@
            ========================================== -->
       <div class="view" id="view-lancamentos">
 
-        <!-- FORMULÁRIO DE LANÇAMENTO -->
+        <!-- FORMULÁRIO -->
         <div class="form-section">
           <div class="form-title">➕ Novo Lançamento</div>
-
-          <!-- Tipo: Receita / Despesa -->
           <div class="tipo-toggle">
             <button class="tipo-btn despesa" data-tipo="despesa">💸 Despesa</button>
             <button class="tipo-btn receita" data-tipo="receita">💰 Receita</button>
           </div>
-
           <div class="form-grid">
-            <!-- Descrição — largura total -->
-            <div class="form-group" style="grid-column: 1 / -1">
+            <div class="form-group" style="grid-column:1/-1">
               <label>Descrição *</label>
-              <input type="text" id="form-descricao"
-                     placeholder="Ex: Aluguel, Supermercado, Salário, Conta de Luz...">
+              <input type="text" id="form-descricao" placeholder="Ex: Aluguel, Supermercado, Salário...">
             </div>
-
             <div class="form-group">
               <label>Valor (R$) *</label>
               <input type="number" id="form-valor" placeholder="0,00" min="0.01" step="0.01">
             </div>
-
             <div class="form-group">
               <label>Categoria *</label>
               <select id="form-categoria"></select>
             </div>
-
             <div class="form-group">
               <label>Data *</label>
               <input type="date" id="form-data">
             </div>
-
             <div class="form-group">
+              <label>Cartão de Crédito</label>
+              <select id="form-cartao">
+                <option value="">Nenhum (débito/espécie)</option>
+              </select>
+            </div>
+            <div class="form-group" style="grid-column:1/-1">
               <label>Observação</label>
               <input type="text" id="form-obs" placeholder="Opcional">
             </div>
           </div>
-
           <div class="form-actions">
             <button class="btn-primary" id="btn-salvar">💾 Salvar Lançamento</button>
-            <button class="btn-secondary" id="btn-limpar">🔄 Limpar Campos</button>
+            <button class="btn-secondary" id="btn-limpar">🔄 Limpar</button>
           </div>
         </div>
 
-        <!-- LISTA DE LANÇAMENTOS -->
+        <!-- FILTROS E PESQUISA -->
         <div class="list-section">
           <div class="list-header">
             <div class="list-title">📋 Lançamentos do Período</div>
-            <div class="filters">
-              <select class="filter-select" id="filter-tipo">
+          </div>
+
+          <!-- MODO DE FILTRO -->
+          <div class="filter-mode-toggle">
+            <button class="filter-mode-btn active" id="btn-modo-mes" onclick="setFilterMode('mes')">
+              📅 Por Mês
+            </button>
+            <button class="filter-mode-btn" id="btn-modo-periodo" onclick="setFilterMode('periodo')">
+              🔍 Por Período
+            </button>
+          </div>
+
+          <!-- FILTROS DO MÊS -->
+          <div class="filters-row" id="filters-mes">
+            <select class="filter-select" id="filter-tipo">
+              <option value="todos">Todos os tipos</option>
+              <option value="receita">Receitas</option>
+              <option value="despesa">Despesas</option>
+            </select>
+            <select class="filter-select" id="filter-cat">
+              <option value="todas">Todas as categorias</option>
+            </select>
+            <select class="filter-select" id="filter-cartao-lista">
+              <option value="todos">Todos os cartões</option>
+            </select>
+          </div>
+
+          <!-- FILTROS DE PERÍODO -->
+          <div class="filters-row" id="filters-periodo" style="display:none">
+            <div class="periodo-inputs">
+              <div class="form-group" style="margin:0">
+                <label>Data Início</label>
+                <input type="date" id="filter-data-ini" class="filter-date">
+              </div>
+              <div class="form-group" style="margin:0">
+                <label>Data Fim</label>
+                <input type="date" id="filter-data-fim" class="filter-date">
+              </div>
+              <select class="filter-select" id="filter-tipo-periodo">
                 <option value="todos">Todos os tipos</option>
                 <option value="receita">Receitas</option>
                 <option value="despesa">Despesas</option>
               </select>
-              <select class="filter-select" id="filter-cat">
+              <select class="filter-select" id="filter-cat-periodo">
                 <option value="todas">Todas as categorias</option>
               </select>
+              <button class="btn-primary" style="padding:8px 20px;font-size:0.85rem" onclick="renderLancamentos()">
+                🔍 Buscar
+              </button>
+            </div>
+            <!-- Resumo do período -->
+            <div class="periodo-resumo" id="periodo-resumo" style="display:none">
+              <span class="resumo-item pos">💚 <span id="res-rec">R$ 0,00</span></span>
+              <span class="resumo-item neg">🔴 <span id="res-desp">R$ 0,00</span></span>
+              <span class="resumo-item neu">💛 <span id="res-saldo">R$ 0,00</span></span>
+              <span class="resumo-item info">📋 <span id="res-qtd">0 lançamentos</span></span>
             </div>
           </div>
+
           <div id="transactions-list">
             <div class="empty-state">
               <span class="empty-icon">📋</span>
@@ -230,10 +316,77 @@
       <!-- /view-lancamentos -->
 
       <!-- ==========================================
+           VIEW: CARTÕES
+           ========================================== -->
+      <div class="view" id="view-cartoes">
+
+        <!-- FORMULÁRIO NOVO CARTÃO -->
+        <div class="form-section">
+          <div class="form-title">💳 Cadastrar Cartão de Crédito</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Nome do Cartão *</label>
+              <input type="text" id="cartao-nome" placeholder="Ex: Nubank, Itaú Visa...">
+            </div>
+            <div class="form-group">
+              <label>Bandeira</label>
+              <select id="cartao-bandeira">
+                <option value="Visa">Visa</option>
+                <option value="Mastercard">Mastercard</option>
+                <option value="Elo">Elo</option>
+                <option value="Amex">American Express</option>
+                <option value="Hipercard">Hipercard</option>
+                <option value="Outro">Outro</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Limite (R$)</label>
+              <input type="number" id="cartao-limite" placeholder="Ex: 5000" min="0" step="0.01">
+            </div>
+            <div class="form-group">
+              <label>Dia de Fechamento *</label>
+              <input type="number" id="cartao-fechamento" placeholder="Ex: 15" min="1" max="31">
+            </div>
+            <div class="form-group">
+              <label>Dia de Vencimento *</label>
+              <input type="number" id="cartao-vencimento" placeholder="Ex: 22" min="1" max="31">
+            </div>
+            <div class="form-group">
+              <label>Cor do Cartão</label>
+              <input type="color" id="cartao-cor" value="#2D6A4F" style="height:44px;padding:4px 8px">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn-primary" onclick="salvarCartao()">💾 Salvar Cartão</button>
+            <button class="btn-secondary" onclick="limparFormCartao()">🔄 Limpar</button>
+          </div>
+        </div>
+
+        <!-- NAVEGAÇÃO FATURA -->
+        <div class="fatura-nav">
+          <button onclick="faturaAnterior()">◀ Fatura Anterior</button>
+          <span class="fatura-label" id="fatura-label">Fatura Atual</span>
+          <button onclick="faturaProxima()">Próxima Fatura ▶</button>
+        </div>
+
+        <!-- LISTA DE CARTÕES -->
+        <div id="cartoes-lista">
+          <div class="empty-state">
+            <span class="empty-icon">💳</span>
+            <p>Nenhum cartão cadastrado.</p>
+            <p style="font-size:0.8rem;margin-top:8px">Adicione seu primeiro cartão acima!</p>
+          </div>
+        </div>
+
+      </div>
+      <!-- /view-cartoes -->
+
+      <!-- ==========================================
            VIEW: RELATÓRIOS
            ========================================== -->
       <div class="view" id="view-relatorios">
 
+        <!-- CARDS RESUMO -->
         <div class="rel-summary">
           <div class="rel-card pos">
             <div class="label">💚 Receitas</div>
@@ -247,30 +400,57 @@
             <div class="label">💛 Saldo</div>
             <div class="value" id="rel-saldo">R$ 0,00</div>
           </div>
+          <div class="rel-card info">
+            <div class="label">📊 Economia</div>
+            <div class="value" id="rel-economia">0%</div>
+          </div>
         </div>
 
+        <!-- INSIGHTS DO RELATÓRIO -->
+        <div class="cat-table-box" id="rel-insights-box">
+          <h3>💡 Análise do Mês — <span id="rel-mes-label"></span></h3>
+          <div id="rel-insights"></div>
+        </div>
+
+        <!-- TABELAS LADO A LADO -->
+        <div class="dual-table-grid">
+          <div class="cat-table-box">
+            <h3>🔴 Despesas por Categoria</h3>
+            <div style="overflow-x:auto">
+              <table class="data-table">
+                <thead>
+                  <tr><th>Categoria</th><th>Valor</th><th>%</th></tr>
+                </thead>
+                <tbody id="rel-cat-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="cat-table-box">
+            <h3>💚 Receitas por Categoria</h3>
+            <div style="overflow-x:auto">
+              <table class="data-table">
+                <thead>
+                  <tr><th>Categoria</th><th>Valor</th><th>%</th></tr>
+                </thead>
+                <tbody id="rel-rec-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- TOP 5 MAIORES DESPESAS -->
         <div class="cat-table-box">
-          <h3>📊 Despesas por Categoria — <span id="rel-mes-label"></span></h3>
+          <h3>🏆 Top 5 Maiores Despesas do Mês</h3>
           <div style="overflow-x:auto">
             <table class="data-table">
               <thead>
-                <tr>
-                  <th>Categoria</th>
-                  <th>Valor</th>
-                  <th>% do Total</th>
-                </tr>
+                <tr><th>#</th><th>Descrição</th><th>Categoria</th><th>Data</th><th>Valor</th></tr>
               </thead>
-              <tbody id="rel-cat-tbody"></tbody>
+              <tbody id="rel-top5-tbody"></tbody>
             </table>
           </div>
         </div>
 
-        <div class="cat-table-box">
-          <h3>📋 Todos os Lançamentos do Mês</h3>
-          <p style="color:var(--texto-medio);font-size:0.85rem;margin-top:8px">
-            Para ver, filtrar e excluir lançamentos, use a aba <strong>Lançamentos</strong>.
-          </p>
-        </div>
       </div>
       <!-- /view-relatorios -->
 
@@ -280,26 +460,24 @@
       <div class="view" id="view-configuracoes">
         <div class="settings-grid">
 
-          <!-- Google Sheets -->
           <div class="settings-card">
-            <h3>☁️ Google Sheets — Sincronização na Nuvem</h3>
+            <h3>☁️ Google Sheets — Sincronização</h3>
             <div class="sheets-config-box">
               <div class="sheets-title">🔗 URL do Google Apps Script</div>
               <div class="sheets-url-row">
-                <input type="text" id="sheets-url" placeholder="Cole aqui a URL do seu Web App (https://script.google.com/macros/s/...)" />
+                <input type="text" id="sheets-url" placeholder="https://script.google.com/macros/s/..."/>
                 <button class="btn-sheets" onclick="salvarUrlSheets()">✅ Conectar</button>
-                <button class="btn-sync" onclick="sincronizarAgora()">🔄 Sincronizar</button>
+                <button class="btn-sync" onclick="sincronizarAgora()">🔄 Sync</button>
               </div>
-              <div class="sheets-hint">💡 Siga o guia de configuração para obter a URL. Depois de conectar, seus dados serão salvos automaticamente na sua planilha Google.</div>
+              <div class="sheets-hint">💡 Cole a URL do Web App do Google Apps Script para salvar na nuvem.</div>
             </div>
           </div>
 
-          <!-- Alterar Senha -->
           <div class="settings-card">
-            <h3>🔐 Alterar Senha de Acesso</h3>
+            <h3>🔐 Alterar Senha</h3>
             <div class="settings-field">
               <label>Senha Atual</label>
-              <input type="password" id="senha-atual" placeholder="Digite a senha atual">
+              <input type="password" id="senha-atual" placeholder="Senha atual">
             </div>
             <div class="settings-field">
               <label>Nova Senha</label>
@@ -312,59 +490,45 @@
             <button class="btn-success" onclick="alterarSenha()">✅ Salvar Nova Senha</button>
           </div>
 
-          <!-- Backup -->
           <div class="settings-card">
             <h3>💾 Backup e Restauração</h3>
             <div class="info-box" style="margin-bottom:18px">
-              Exporte seus dados para fazer backup. Para usar em outro dispositivo, exporte aqui e importe lá.
+              Exporte seus dados para backup. Inclui lançamentos e cartões.
             </div>
-            <button class="btn-info" onclick="exportarDados()" style="margin-bottom:8px">
-              📥 Exportar Dados (JSON)
-            </button>
+            <button class="btn-info" onclick="exportarDados()">📥 Exportar (JSON)</button>
             <button class="btn-secondary" onclick="importarDados()" style="width:100%;margin-top:8px;padding:11px">
-              📤 Importar Dados de Backup
+              📤 Importar Backup
             </button>
           </div>
 
-          <!-- Zona de perigo -->
           <div class="settings-card">
             <h3>⚠️ Zona de Perigo</h3>
             <div class="info-box" style="margin-bottom:18px;border-color:var(--vermelho)">
-              ⚠️ Ação irreversível! Todos os lançamentos serão apagados permanentemente.
+              ⚠️ Ação irreversível! Todos os dados serão apagados.
             </div>
-            <button class="btn-danger" onclick="limparTodosDados()">
-              🗑️ Apagar Todos os Dados
-            </button>
+            <button class="btn-danger" onclick="limparTodosDados()">🗑️ Apagar Todos os Dados</button>
           </div>
 
-          <!-- Sobre -->
           <div class="settings-card">
             <h3>ℹ️ Sobre o FinançasPro</h3>
             <div class="info-box">
-              <strong>FinançasPro v1.0</strong><br><br>
-              📱 Funciona no celular e no computador<br>
-              🔒 Dados salvos localmente no seu navegador<br>
-              💾 Use o backup para não perder seus dados<br>
+              <strong>FinançasPro v2.0</strong><br><br>
+              📱 Celular e computador<br>
+              🔒 Dados locais + nuvem (Google Sheets)<br>
+              💳 Controle de cartões de crédito<br>
               🔑 Senha padrão: FinancasPro2025<br><br>
-              <em>Produto distribuído via Hotmart.<br>
-              Para suporte, acesse sua conta Hotmart.</em>
+              <em>Distribuído via Hotmart.</em>
             </div>
           </div>
 
         </div>
       </div>
-      <!-- /view-configuracoes -->
 
     </div>
-    <!-- /content -->
   </div>
-  <!-- /main-content -->
 </div>
-<!-- /app -->
 
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
-
 <script src="js/app.js"></script>
 </body>
 </html>
