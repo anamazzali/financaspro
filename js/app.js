@@ -30,7 +30,8 @@ const CATEGORIAS_DESPESA = [
 ];
 
 const CATEGORIAS_RECEITA = [
-  'Salário','Renda Extra','Freelance','Investimentos','Vale Alimentação','Vale Transporte','Outros'
+  'Salário','Renda Extra','Freelance','Investimentos',
+  'Vale Alimentação','Vale Transporte','Outros'
 ];
 
 const ICONES = {
@@ -39,9 +40,10 @@ const ICONES = {
   'Entretenimento':'🎬','Investimentos Curto Prazo':'📈',
   'Investimentos Longo Prazo':'💰','Empréstimos':'🏦',
   'Igreja / Religião':'⛪','Impostos':'📋','Presentes':'🎁',
-  'Doações':'❤️','Jurídico':'⚖️','Saúde':'❤️',
+  'Doações':'❤️','Jurídico':'⚖️','Saúde':'🏥',
   'Salário':'💼','Renda Extra':'💵','Freelance':'🖥️',
-  'Investimentos':'📊','Outros':'📌'
+  'Investimentos':'📊','Vale Alimentação':'🍽️',
+  'Vale Transporte':'🚌','Outros':'📌'
 };
 
 const CORES_GRAFICO = [
