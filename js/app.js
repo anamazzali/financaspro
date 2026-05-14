@@ -182,13 +182,17 @@ async function testarConexaoSheets() {
   }
 }
 
-// Carrega lancamentos do Sheets
+// Carrega lancamentos do Sheets (POST evita problema de CORS do redirect Google)
 async function loadSheets() {
   if (!SHEETS_URL) return null;
   try {
-    const res = await fetch(SHEETS_URL + '?action=load', { method: 'GET' });
+    const res = await fetch(SHEETS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'load' })
+    });
     const data = await res.json();
-    if (data.ok) return data.transactions;
+    if (data.ok && Array.isArray(data.transactions)) return data.transactions;
     return null;
   } catch { return null; }
 }
@@ -213,31 +217,44 @@ async function saveSheets(transactions) {
 async function loadData() {
   setSyncStatus('Carregando dados...', 'info');
 
-  // 1. Carregar LocalStorage sempre (para ter algo enquanto carrega o Sheets)
+  // 1. Sempre carrega LocalStorage primeiro — exibe algo imediatamente
   const localData = loadLocalStorage();
   state.transactions = localData;
   renderAll();
 
-  // 2. Se tem URL configurada, tentar carregar do Sheets
+  // 2. Se tem URL configurada, tenta Sheets
   if (SHEETS_URL) {
     state.sincronizando = true;
     setSyncStatus('⏳ Sincronizando com Google Sheets...', 'info');
 
     const sheetsData = await loadSheets();
+    state.sincronizando = false;
 
-    if (sheetsData !== null) {
-      // Sheets carregou com sucesso
+    if (sheetsData !== null && sheetsData.length > 0) {
+      // Sheets tem dados reais → usa e atualiza cache local
       state.transactions = sheetsData;
       state.sheetsConectado = true;
-      saveLocalStorage(sheetsData); // Atualiza o cache local
+      saveLocalStorage(sheetsData);
       setSyncStatus('✅ Google Sheets conectado', 'success');
       renderAll();
+
+    } else if (sheetsData !== null && sheetsData.length === 0 && localData.length > 0) {
+      // Sheets vazio MAS local tem dados → envia local para o Sheets (recuperação)
+      state.sheetsConectado = true;
+      setSyncStatus('🔄 Recuperando dados no Sheets...', 'info');
+      const ok = await saveSheets(localData);
+      setSyncStatus(ok ? '✅ Google Sheets sincronizado' : '⚠️ Falha ao sincronizar', ok ? 'success' : 'warning');
+
+    } else if (sheetsData !== null && sheetsData.length === 0 && localData.length === 0) {
+      // Ambos vazios — usuario novo ou sem dados ainda
+      state.sheetsConectado = true;
+      setSyncStatus('✅ Google Sheets conectado', 'success');
+
     } else {
-      // Sheets falhou — usar LocalStorage
+      // sheetsData === null — conexao falhou → usa LocalStorage sem sobrescrever
       state.sheetsConectado = false;
       setSyncStatus('⚠️ Offline — usando dados locais', 'warning');
     }
-    state.sincronizando = false;
   } else {
     setSyncStatus('💾 Modo local (sem Google Sheets)', 'local');
   }
