@@ -73,7 +73,7 @@
         <h2>Dashboard</h2>
       </div>
       <div class="topbar-right">
-        <span class="topbar-date" id="topbar-date"></span>
+        <span class="topbar-date" id="topbar-date"></span><span class="sync-status local" id="sync-status">💾 Modo local</span>
         <button class="btn-logout" onclick="logout()">🚪 Sair</button>
       </div>
     </div>
@@ -279,6 +279,20 @@
            ========================================== -->
       <div class="view" id="view-configuracoes">
         <div class="settings-grid">
+
+          <!-- Google Sheets -->
+          <div class="settings-card">
+            <h3>☁️ Google Sheets — Sincronização na Nuvem</h3>
+            <div class="sheets-config-box">
+              <div class="sheets-title">🔗 URL do Google Apps Script</div>
+              <div class="sheets-url-row">
+                <input type="text" id="sheets-url" placeholder="Cole aqui a URL do seu Web App (https://script.google.com/macros/s/...)" />
+                <button class="btn-sheets" onclick="salvarUrlSheets()">✅ Conectar</button>
+                <button class="btn-sync" onclick="sincronizarAgora()">🔄 Sincronizar</button>
+              </div>
+              <div class="sheets-hint">💡 Siga o guia de configuração para obter a URL. Depois de conectar, seus dados serão salvos automaticamente na sua planilha Google.</div>
+            </div>
+          </div>
 
           <!-- Alterar Senha -->
           <div class="settings-card">
