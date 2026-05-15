@@ -120,9 +120,11 @@ document.addEventListener('DOMContentLoaded', () => {
   updateTopbarDate();
   initPeriodoFiltro();
 
-  // Verifica sessão salva ou aguarda login Google
+  // Inicia autenticação Google
+  initGoogleAuth();
+
+  // Verifica sessão salva
   if (!checkExistingSession()) {
-    // Garante que a tela de login está visível
     document.getElementById('login-gate').style.display = 'flex';
   }
 });
@@ -168,34 +170,132 @@ function initMobileMenu() {
 // ================================================
 // GOOGLE AUTHENTICATION
 // ================================================
+const GOOGLE_CLIENT_ID = '415111664058-jgshiqlt2qbidcd5frdrg59omjelkg2u.apps.googleusercontent.com';
 
-// Chamado pelo Google Identity Services após login
-function handleCredentialResponse(response) {
+let tokenClient = null;
+
+// Inicializa o token client quando a lib do Google carregar
+function initGoogleAuth() {
+  if (!window.google?.accounts?.oauth2) {
+    setTimeout(initGoogleAuth, 300);
+    return;
+  }
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: 'openid email profile',
+    prompt: 'select_account',   // SEMPRE pede para escolher a conta
+    callback: handleTokenResponse,
+  });
+}
+
+// Chamado pelo botão "Entrar com sua conta Google"
+function iniciarLoginGoogle() {
+  const btn = document.getElementById('btn-google-login');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Abrindo seletor de conta...'; }
+
+  if (!tokenClient) {
+    initGoogleAuth();
+    setTimeout(() => {
+      if (btn) { btn.disabled = false; btn.innerHTML = getSvgGoogle() + ' Entrar com sua conta Google'; }
+      tokenClient?.requestAccessToken();
+    }, 600);
+    return;
+  }
+  tokenClient.requestAccessToken();
+}
+
+function getSvgGoogle() {
+  return '<svg width="20" height="20" viewBox="0 0 48 48" style="flex-shrink:0"><path fill="#4285F4" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#34A853" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#EA4335" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
+}
+
+// Recebe o token de acesso e busca info do usuário
+async function handleTokenResponse(tokenResponse) {
+  const btn = document.getElementById('btn-google-login');
+  if (btn) { btn.disabled = false; btn.innerHTML = getSvgGoogle() + ' Entrar com sua conta Google'; }
+
+  if (tokenResponse.error) {
+    if (tokenResponse.error !== 'access_denied') {
+      document.getElementById('acesso-negado').classList.add('show');
+    }
+    return;
+  }
+
   try {
-    // Decodifica o JWT do Google
-    const payload = parseJwt(response.credential);
-    const email   = payload.email;
-    const name    = payload.name;
-    const picture = payload.picture;
+    // Busca informações do usuário
+    const res  = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: 'Bearer ' + tokenResponse.access_token }
+    });
+    const user = await res.json();
 
-    // Salva usuário no estado e no localStorage
+    if (!user.email) throw new Error('Email não obtido');
+
+    const email   = user.email;
+    const name    = user.name    || email.split('@')[0];
+    const picture = user.picture || '';
+
+    // Salva sessão
     state.currentUser = { email, name, picture };
     localStorage.setItem('fp_user', JSON.stringify({ email, name, picture }));
 
-    // Atualiza a UI
+    // Atualiza UI
     mostrarInfoUsuario(email, name, picture);
-
-    // Esconde login, mostra app
     document.getElementById('login-gate').style.display = 'none';
     document.getElementById('acesso-negado').classList.remove('show');
 
-    // Carrega os dados do usuário
+    // Mensagem de boas-vindas
+    showToast('👋 Olá, ' + name.split(' ')[0] + '! Bem-vindo(a)!');
+
+    // Carrega dados
     loadData();
 
   } catch(err) {
-    console.error('Erro no login:', err);
+    console.error('Erro ao buscar info do usuário:', err);
     document.getElementById('acesso-negado').classList.add('show');
   }
+}
+
+function mostrarInfoUsuario(email, name, picture) {
+  const userInfo = document.getElementById('user-info');
+  const userName = document.getElementById('user-name');
+  if (userInfo) userInfo.style.display = 'flex';
+  if (userName) userName.textContent = name?.split(' ')[0] || email.split('@')[0];
+
+  const avatar = document.getElementById('user-avatar');
+  if (avatar) {
+    if (picture) {
+      avatar.outerHTML = `<img src="${picture}" class="user-avatar" id="user-avatar" alt="Foto" referrerpolicy="no-referrer">`;
+    } else {
+      avatar.textContent = (name||email)[0].toUpperCase();
+    }
+  }
+  const configEmail = document.getElementById('config-user-email');
+  if (configEmail) configEmail.textContent = email;
+}
+
+function logout() {
+  const email = state.currentUser?.email || '';
+
+  // Limpa estado e sessão local
+  state.currentUser  = null;
+  state.transactions = [];
+  state.cartoes      = [];
+  localStorage.removeItem('fp_user');
+
+  // Revoga token para forçar nova escolha de conta
+  if (window.google?.accounts?.oauth2 && email) {
+    google.accounts.oauth2.revoke(email, () => {});
+  }
+  if (window.google?.accounts?.id) {
+    google.accounts.id.disableAutoSelect();
+  }
+
+  // Reinicia o tokenClient para que prompt='select_account' funcione de novo
+  tokenClient = null;
+  initGoogleAuth();
+
+  document.getElementById('login-gate').style.display = 'flex';
+  document.getElementById('acesso-negado').classList.remove('show');
+  showToast('👋 Você saiu. Clique no botão para escolher uma conta.');
 }
 
 function parseJwt(token) {
@@ -205,43 +305,6 @@ function parseJwt(token) {
       '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
     ).join('')
   ));
-}
-
-function mostrarInfoUsuario(email, name, picture) {
-  // Topbar
-  const userInfo   = document.getElementById('user-info');
-  const userAvatar = document.getElementById('user-avatar');
-  const userName   = document.getElementById('user-name');
-  if (userInfo)   userInfo.style.display = 'flex';
-  if (userName)   userName.textContent = name?.split(' ')[0] || email.split('@')[0];
-  if (userAvatar) {
-    if (picture) {
-      userAvatar.outerHTML = `<img src="${picture}" class="user-avatar" id="user-avatar" alt="Foto">`;
-    } else {
-      userAvatar.textContent = (name||email)[0].toUpperCase();
-    }
-  }
-  // Config
-  const configEmail = document.getElementById('config-user-email');
-  if (configEmail) configEmail.textContent = email;
-}
-
-function logout() {
-  // Limpa estado
-  state.currentUser = null;
-  state.transactions = [];
-  state.cartoes = [];
-  localStorage.removeItem('fp_user');
-
-  // Revoga token do Google
-  if (window.google?.accounts?.id) {
-    google.accounts.id.disableAutoSelect();
-  }
-
-  // Volta para tela de login
-  document.getElementById('login-gate').style.display = 'flex';
-  document.getElementById('acesso-negado').classList.remove('show');
-  showToast('👋 Você saiu da conta.');
 }
 
 // Verificar se já estava logado (sessão anterior)
