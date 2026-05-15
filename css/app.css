@@ -1481,3 +1481,80 @@ body {
   color: var(--texto-medio);
   text-align: center;
 }
+
+/* ================================================
+   LANÇAMENTOS RECORRENTES
+   ================================================ */
+.recorrente-toggle {
+  background: var(--bege);
+  border-radius: 10px;
+  padding: 12px 16px;
+  border: 2px solid var(--bege-escuro);
+  transition: border-color 0.2s, background 0.2s;
+}
+.recorrente-toggle:has(input:checked) {
+  border-color: var(--verde-claro);
+  background: var(--verde-positivo-claro);
+}
+.recorrente-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  font-size: 0.88rem;
+  user-select: none;
+}
+.recorrente-label input[type="checkbox"] { display: none; }
+.recorrente-check {
+  font-size: 1.4rem;
+  width: 36px;
+  height: 36px;
+  background: var(--branco);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 2px solid var(--bege-escuro);
+  transition: all 0.2s;
+}
+.recorrente-label:has(input:checked) .recorrente-check {
+  background: var(--verde-positivo);
+  border-color: var(--verde-positivo);
+}
+.recorrente-label strong { display: block; color: var(--verde-escuro); }
+.recorrente-label span   { font-size: 0.78rem; color: var(--texto-medio); margin-top: 2px; display: block; }
+
+/* Badge recorrente na lista */
+.badge-recorrente {
+  display: inline-block;
+  font-size: 0.68rem;
+  background: #E8F5E9;
+  color: var(--verde-positivo);
+  border: 1px solid var(--verde-claro);
+  padding: 1px 7px;
+  border-radius: 10px;
+  margin-left: 6px;
+  font-weight: bold;
+  vertical-align: middle;
+}
+
+/* Botão cancelar recorrente */
+.btn-cancelar-recorr {
+  background: none;
+  border: none;
+  color: #E65100;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.btn-cancelar-recorr:hover { background: #FFF3E0; }
+
+/* Linha recorrente (de outro mês) levemente diferente */
+.transaction-item:has(.badge-recorrente) {
+  border-left: 3px solid var(--verde-claro);
+  padding-left: 10px;
+}
