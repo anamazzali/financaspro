@@ -31,6 +31,16 @@ const ICONES = {
   'Vale Alimentação':'🍽️','Vale Transporte':'🚌','Outros':'📌'
 };
 
+const FORMAS_PAGAMENTO = [
+  '💳 Cartão de Crédito',
+  '💳 Cartão de Débito',
+  '🏦 PIX',
+  '🔄 Transferência',
+  '📄 Boleto',
+  '💵 Dinheiro / Espécie',
+  '🏧 Depósito',
+];
+
 const CORES_GRAFICO = [
   '#2D6A4F','#D4AF37','#52B788','#A07820','#95D5B2','#1B4332',
   '#F0CB5E','#40916C','#B7E4C7','#C9A227','#74C69D','#081C15',
@@ -652,13 +662,14 @@ async function salvarLancamento() {
   const data      = document.getElementById('form-data')?.value;
   const obs       = document.getElementById('form-obs')?.value.trim();
   const cartaoId  = document.getElementById('form-cartao')?.value || '';
+  const pagamento = document.getElementById('form-pagamento')?.value || '';
 
   if (!desc)              { showToast('⚠️ Informe a descrição.');    return; }
   if (!valor || valor<=0) { showToast('⚠️ Informe um valor válido.'); return; }
   if (!categoria)         { showToast('⚠️ Selecione uma categoria.'); return; }
   if (!data)              { showToast('⚠️ Informe a data.');          return; }
 
-  await addTransaction({ tipo, desc, valor, categoria, data, obs, cartaoId });
+  await addTransaction({ tipo, desc, valor, categoria, data, obs, cartaoId, pagamento });
   limparForm();
 }
 
@@ -669,6 +680,8 @@ function limparForm() {
   document.getElementById('form-obs').value        = '';
   document.getElementById('form-data').value       = getTodayISO();
   document.getElementById('form-cartao').value     = '';
+  const pgto = document.getElementById('form-pagamento');
+  if (pgto) pgto.value = '';
 }
 
 // ================================================
@@ -701,6 +714,7 @@ function initFilters() {
   document.getElementById('filter-tipo')?.addEventListener('change', renderLancamentos);
   document.getElementById('filter-cat')?.addEventListener('change', renderLancamentos);
   document.getElementById('filter-cartao-lista')?.addEventListener('change', renderLancamentos);
+  document.getElementById('filter-pagamento')?.addEventListener('change', renderLancamentos);
 }
 
 function renderAll() {
@@ -888,11 +902,13 @@ function renderLancamentos() {
     txs = getTransacoesMes();
     const filterTipo   = document.getElementById('filter-tipo')?.value   || 'todos';
     const filterCat    = document.getElementById('filter-cat')?.value    || 'todas';
-    const filterCartao = document.getElementById('filter-cartao-lista')?.value || 'todos';
-    if (filterTipo !== 'todos') txs = txs.filter(t => t.tipo === filterTipo);
-    if (filterCat  !== 'todas') txs = txs.filter(t => t.categoria === filterCat);
-    if (filterCartao === 'sem') txs = txs.filter(t => !t.cartaoId);
+    const filterCartao   = document.getElementById('filter-cartao-lista')?.value || 'todos';
+    const filterPagamento = document.getElementById('filter-pagamento')?.value || 'todas';
+    if (filterTipo !== 'todos')  txs = txs.filter(t => t.tipo === filterTipo);
+    if (filterCat  !== 'todas')  txs = txs.filter(t => t.categoria === filterCat);
+    if (filterCartao === 'sem')  txs = txs.filter(t => !t.cartaoId);
     else if (filterCartao !== 'todos') txs = txs.filter(t => String(t.cartaoId) === filterCartao);
+    if (filterPagamento !== 'todas') txs = txs.filter(t => t.pagamento === filterPagamento);
     updateFilterCats(getTransacoesMes());
   }
 
@@ -916,7 +932,7 @@ function renderTransactionList(txs) {
       <div class="trans-icon ${t.tipo}">${ICONES[t.categoria]||'📌'}</div>
       <div class="trans-info">
         <div class="trans-desc">${escapeHtml(t.desc)} ${cartaoTag}</div>
-        <div class="trans-cat">${t.categoria}${t.obs?' · '+escapeHtml(t.obs):''}</div>
+        <div class="trans-cat">${t.categoria}${t.pagamento?' · '+escapeHtml(t.pagamento):''}${t.obs?' · '+escapeHtml(t.obs):''}</div>
       </div>
       <div class="trans-date">${formatData(t.data)}</div>
       <div class="trans-value ${t.tipo}">${t.tipo==='receita'?'+':'-'} ${formatMoeda(t.valor)}</div>
