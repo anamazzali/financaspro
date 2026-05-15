@@ -120,12 +120,10 @@ document.addEventListener('DOMContentLoaded', () => {
   updateTopbarDate();
   initPeriodoFiltro();
 
-  // Inicia autenticação Google
-  initGoogleAuth();
-
-  // Verifica sessão salva
+  // Verifica sessão salva ou inicia tela de login
   if (!checkExistingSession()) {
     document.getElementById('login-gate').style.display = 'flex';
+    initGoogleAuth(); // Renderiza botão Google
   }
 });
 
@@ -168,70 +166,53 @@ function initMobileMenu() {
 }
 
 // ================================================
-// GOOGLE AUTHENTICATION
+// GOOGLE AUTHENTICATION — Sign In with Google
 // ================================================
 const GOOGLE_CLIENT_ID = '415111664058-jgshiqlt2qbidcd5frdrg59omjelkg2u.apps.googleusercontent.com';
 
-let tokenClient = null;
-
-// Inicializa o token client quando a lib do Google carregar
+// Inicializa quando a biblioteca carregar
 function initGoogleAuth() {
-  if (!window.google?.accounts?.oauth2) {
-    setTimeout(initGoogleAuth, 300);
+  if (!window.google?.accounts?.id) {
+    setTimeout(initGoogleAuth, 200);
     return;
   }
-  tokenClient = google.accounts.oauth2.initTokenClient({
+
+  // Desativa auto-select para forçar escolha de conta
+  google.accounts.id.disableAutoSelect();
+
+  // Inicializa com callback
+  google.accounts.id.initialize({
     client_id: GOOGLE_CLIENT_ID,
-    scope: 'openid email profile',
-    prompt: 'select_account',   // SEMPRE pede para escolher a conta
-    callback: handleTokenResponse,
+    callback: handleCredentialResponse,
+    auto_select: false,
+    cancel_on_tap_outside: true,
+    context: 'signin',
   });
-}
 
-// Chamado pelo botão "Entrar com sua conta Google"
-function iniciarLoginGoogle() {
-  const btn = document.getElementById('btn-google-login');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Abrindo seletor de conta...'; }
-
-  if (!tokenClient) {
-    initGoogleAuth();
-    setTimeout(() => {
-      if (btn) { btn.disabled = false; btn.innerHTML = getSvgGoogle() + ' Entrar com sua conta Google'; }
-      tokenClient?.requestAccessToken();
-    }, 600);
-    return;
-  }
-  tokenClient.requestAccessToken();
-}
-
-function getSvgGoogle() {
-  return '<svg width="20" height="20" viewBox="0 0 48 48" style="flex-shrink:0"><path fill="#4285F4" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#34A853" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#EA4335" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
-}
-
-// Recebe o token de acesso e busca info do usuário
-async function handleTokenResponse(tokenResponse) {
-  const btn = document.getElementById('btn-google-login');
-  if (btn) { btn.disabled = false; btn.innerHTML = getSvgGoogle() + ' Entrar com sua conta Google'; }
-
-  if (tokenResponse.error) {
-    if (tokenResponse.error !== 'access_denied') {
-      document.getElementById('acesso-negado').classList.add('show');
-    }
-    return;
-  }
-
-  try {
-    // Busca informações do usuário
-    const res  = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-      headers: { Authorization: 'Bearer ' + tokenResponse.access_token }
+  // Renderiza o botão oficial do Google no container
+  const container = document.getElementById('google-btn-container');
+  if (container) {
+    google.accounts.id.renderButton(container, {
+      type:           'standard',
+      theme:          'filled_green',
+      size:           'large',
+      text:           'signin_with',
+      shape:          'rectangular',
+      logo_alignment: 'left',
+      width:          300,
     });
-    const user = await res.json();
+  }
+}
 
-    if (!user.email) throw new Error('Email não obtido');
+// Callback chamado após o usuário escolher a conta
+function handleCredentialResponse(response) {
+  try {
+    const payload = parseJwt(response.credential);
+    const email   = payload.email;
+    const name    = payload.name    || email.split('@')[0];
+    const picture = payload.picture || '';
 
-    const email   = user.email;
-    const name    = user.name    || email.split('@')[0];
-    const picture = user.picture || '';
+    if (!email) throw new Error('Email não recebido');
 
     // Salva sessão
     state.currentUser = { email, name, picture };
@@ -242,16 +223,24 @@ async function handleTokenResponse(tokenResponse) {
     document.getElementById('login-gate').style.display = 'none';
     document.getElementById('acesso-negado').classList.remove('show');
 
-    // Mensagem de boas-vindas
     showToast('👋 Olá, ' + name.split(' ')[0] + '! Bem-vindo(a)!');
-
-    // Carrega dados
     loadData();
 
   } catch(err) {
-    console.error('Erro ao buscar info do usuário:', err);
+    console.error('Erro no login:', err);
     document.getElementById('acesso-negado').classList.add('show');
   }
+}
+
+function parseJwt(token) {
+  try {
+    const base64 = token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+    return JSON.parse(decodeURIComponent(
+      atob(base64).split('').map(c =>
+        '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+      ).join('')
+    ));
+  } catch { return {}; }
 }
 
 function mostrarInfoUsuario(email, name, picture) {
@@ -268,43 +257,29 @@ function mostrarInfoUsuario(email, name, picture) {
       avatar.textContent = (name||email)[0].toUpperCase();
     }
   }
-  const configEmail = document.getElementById('config-user-email');
-  if (configEmail) configEmail.textContent = email;
+  const cfgEmail = document.getElementById('config-user-email');
+  if (cfgEmail) cfgEmail.textContent = email;
 }
 
 function logout() {
   const email = state.currentUser?.email || '';
-
-  // Limpa estado e sessão local
   state.currentUser  = null;
   state.transactions = [];
   state.cartoes      = [];
   localStorage.removeItem('fp_user');
 
-  // Revoga token para forçar nova escolha de conta
-  if (window.google?.accounts?.oauth2 && email) {
-    google.accounts.oauth2.revoke(email, () => {});
-  }
+  // Revoga sessão do Google e força nova seleção
   if (window.google?.accounts?.id) {
     google.accounts.id.disableAutoSelect();
+    if (email) google.accounts.id.revoke(email, () => {});
   }
 
-  // Reinicia o tokenClient para que prompt='select_account' funcione de novo
-  tokenClient = null;
-  initGoogleAuth();
+  // Re-renderiza o botão
+  setTimeout(initGoogleAuth, 300);
 
   document.getElementById('login-gate').style.display = 'flex';
   document.getElementById('acesso-negado').classList.remove('show');
-  showToast('👋 Você saiu. Clique no botão para escolher uma conta.');
-}
-
-function parseJwt(token) {
-  const base64 = token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
-  return JSON.parse(decodeURIComponent(
-    atob(base64).split('').map(c =>
-      '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
-    ).join('')
-  ));
+  showToast('👋 Você saiu. Escolha uma conta para continuar.');
 }
 
 // Verificar se já estava logado (sessão anterior)
@@ -330,7 +305,11 @@ function emailKey(base, email) {
   return base + '_' + (email||'local').replace(/[@.]/g,'_');
 }
 function loadLocalStorage(email) {
-  try { return JSON.parse(localStorage.getItem(emailKey('fp_tx', email)) || '[]'); } catch { return []; }
+  try {
+    const raw = JSON.parse(localStorage.getItem(emailKey('fp_tx', email)) || '[]');
+    // Normaliza datas ao carregar
+    return raw.map(t => ({ ...t, data: normalizarData(t.data || '') }));
+  } catch { return []; }
 }
 function saveLocalStorage(t, email) {
   localStorage.setItem(emailKey('fp_tx', email), JSON.stringify(t));
@@ -365,9 +344,33 @@ async function loadSheets() {
       body: JSON.stringify({action:'load', email})
     });
     const d = await r.json();
-    if (d.ok && Array.isArray(d.transactions)) return d.transactions;
+    if (d.ok && Array.isArray(d.transactions)) {
+      // Normaliza datas com formato incorreto (Date.toString() → YYYY-MM-DD)
+      return d.transactions.map(t => ({
+        ...t,
+        data: normalizarData(t.data)
+      }));
+    }
     return null;
   } catch { return null; }
+}
+
+// Converte qualquer formato de data para YYYY-MM-DD
+function normalizarData(dataStr) {
+  if (!dataStr) return '';
+  // Já está no formato correto
+  if (/^\d{4}-\d{2}-\d{2}$/.test(String(dataStr))) return dataStr;
+  // Tenta converter outros formatos
+  try {
+    const d = new Date(dataStr);
+    if (!isNaN(d.getTime())) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return y + '-' + m + '-' + day;
+    }
+  } catch(e) {}
+  return String(dataStr).slice(0, 10); // fallback
 }
 
 async function saveSheets(transactions) {
@@ -387,11 +390,14 @@ async function saveSheets(transactions) {
 // ================================================
 async function loadData() {
   setSyncStatus('Carregando...', 'info');
-  // Dados são por usuário (chave = email)
   const email = state.currentUser?.email || 'local';
+
+  // MIGRAÇÃO: copia dados da chave antiga para a nova (roda só 1x por email)
+  migrarDadosAntigos(email);
+
   const localData = loadLocalStorage(email);
   state.transactions = localData;
-  state.cartoes = loadCartoesLocal(email);
+  state.cartoes      = loadCartoesLocal(email);
   renderAll();
 
   if (SHEETS_URL) {
@@ -401,20 +407,24 @@ async function loadData() {
     state.sincronizando = false;
 
     if (sheetsData !== null && sheetsData.length > 0) {
+      // Sheets tem dados → usa e atualiza cache local
       state.transactions = sheetsData;
       state.sheetsConectado = true;
-      saveLocalStorage(sheetsData);
+      saveLocalStorage(sheetsData, email);
       setSyncStatus('✅ Sheets conectado', 'success');
       renderAll();
     } else if (sheetsData !== null && sheetsData.length === 0 && localData.length > 0) {
+      // Sheets vazio + local tem dados → envia local para Sheets
       state.sheetsConectado = true;
-      setSyncStatus('🔄 Recuperando...', 'info');
+      setSyncStatus('🔄 Enviando dados ao Sheets...', 'info');
       const ok = await saveSheets(localData);
       setSyncStatus(ok ? '✅ Sheets sincronizado' : '⚠️ Falha sync', ok ? 'success' : 'warning');
-    } else if (sheetsData !== null && sheetsData.length === 0) {
+    } else if (sheetsData !== null && sheetsData.length === 0 && localData.length === 0) {
+      // Ambos vazios — sem dados ainda
       state.sheetsConectado = true;
       setSyncStatus('✅ Sheets conectado', 'success');
     } else {
+      // Falha — mantém dados locais SEM sobrescrever
       state.sheetsConectado = false;
       setSyncStatus('⚠️ Offline — dados locais', 'warning');
     }
@@ -423,13 +433,52 @@ async function loadData() {
   }
 }
 
+// MIGRAÇÃO de dados antigos (chave fp_transactions → fp_tx_email)
+function migrarDadosAntigos(email) {
+  const chaveCtrl = 'fp_migrado_' + email.replace(/[@.]/g, '_');
+  if (localStorage.getItem(chaveCtrl)) return;
+  try {
+    const dadosAntigos = localStorage.getItem('fp_transactions');
+    if (dadosAntigos) {
+      const parsed = JSON.parse(dadosAntigos);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const chaveNova  = emailKey('fp_tx', email);
+        const dadosNovos = localStorage.getItem(chaveNova);
+        const novosArr   = dadosNovos ? JSON.parse(dadosNovos) : [];
+        if (novosArr.length === 0) {
+          // Normaliza datas durante a migração
+          const normalizados = parsed.map(t => ({
+            ...t, data: normalizarData(t.data || '')
+          }));
+          localStorage.setItem(chaveNova, JSON.stringify(normalizados));
+          console.log('Migração OK: ' + parsed.length + ' lançamentos copiados e datas normalizadas');
+        }
+      }
+    }
+  } catch(e) { console.log('Migração ignorada:', e); }
+  localStorage.setItem(chaveCtrl, '1');
+}
+
 async function saveData() {
   const email = state.currentUser?.email || 'local';
+
+  // Sempre salva no LocalStorage primeiro (instantâneo)
   saveLocalStorage(state.transactions, email);
   saveCartoesLocal(state.cartoes, email);
-  if (SHEETS_URL && state.sheetsConectado) {
-    const ok = await saveSheets(state.transactions);
-    setSyncStatus(ok ? '✅ Salvo no Sheets' : '⚠️ Salvo local', ok ? 'success' : 'warning');
+
+  // Tenta salvar no Sheets se configurado
+  if (SHEETS_URL) {
+    if (!state.sheetsConectado) {
+      // Tenta reconectar antes de salvar
+      state.sheetsConectado = await testarConexaoSheets();
+    }
+    if (state.sheetsConectado) {
+      const ok = await saveSheets(state.transactions);
+      setSyncStatus(ok ? '✅ Salvo no Sheets' : '⚠️ Salvo local', ok ? 'success' : 'warning');
+      if (!ok) state.sheetsConectado = false;
+    } else {
+      setSyncStatus('⚠️ Salvo local (Sheets offline)', 'warning');
+    }
   }
 }
 
