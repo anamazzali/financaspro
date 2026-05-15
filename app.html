@@ -528,6 +528,62 @@
   </div>
 </div>
 
+
+<!-- ============================================
+     MASCOTE — Aparece na troca de páginas
+     ============================================ -->
+<div id="mascote-overlay">
+  <div class="mascote-ring-outer">
+    <div class="mascote-ring-inner">
+      <div class="mascote-char">
+        <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" width="110" height="110">
+          <!-- Corpo do mascote (corujinha) -->
+          <!-- Corpo oval -->
+          <ellipse cx="60" cy="72" rx="32" ry="36" fill="#D4AF37"/>
+          <!-- Barriga -->
+          <ellipse cx="60" cy="78" rx="20" ry="24" fill="#FAF6EE"/>
+          <!-- Cabeça redonda -->
+          <circle cx="60" cy="40" r="28" fill="#D4AF37"/>
+          <!-- Orelhas (tufos) -->
+          <ellipse cx="38" cy="16" rx="9" ry="14" fill="#D4AF37" transform="rotate(-20,38,16)"/>
+          <ellipse cx="82" cy="16" rx="9" ry="14" fill="#D4AF37" transform="rotate(20,82,16)"/>
+          <ellipse cx="38" cy="15" rx="5" ry="9" fill="#A07820" transform="rotate(-20,38,15)"/>
+          <ellipse cx="82" cy="15" rx="5" ry="9" fill="#A07820" transform="rotate(20,82,15)"/>
+          <!-- Olhos grandes -->
+          <circle cx="47" cy="38" r="11" fill="#1B4332"/>
+          <circle cx="73" cy="38" r="11" fill="#1B4332"/>
+          <circle cx="47" cy="38" r="7" fill="#FAF6EE"/>
+          <circle cx="73" cy="38" r="7" fill="#FAF6EE"/>
+          <circle cx="49" cy="36" r="4" fill="#1A1A2E"/>
+          <circle cx="75" cy="36" r="4" fill="#1A1A2E"/>
+          <!-- Brilho dos olhos -->
+          <circle cx="51" cy="34" r="1.5" fill="white"/>
+          <circle cx="77" cy="34" r="1.5" fill="white"/>
+          <!-- Bico -->
+          <polygon points="60,46 54,52 66,52" fill="#A07820"/>
+          <!-- Asas -->
+          <ellipse cx="30" cy="76" rx="12" ry="22" fill="#A07820" transform="rotate(-15,30,76)"/>
+          <ellipse cx="90" cy="76" rx="12" ry="22" fill="#A07820" transform="rotate(15,90,76)"/>
+          <!-- Moeda na asa -->
+          <circle cx="90" cy="80" r="10" fill="#D4AF37" stroke="#A07820" stroke-width="2"/>
+          <text x="90" y="84" text-anchor="middle" font-size="10" font-weight="bold" fill="#1B4332">R$</text>
+          <!-- Pés -->
+          <ellipse cx="50" cy="106" rx="10" ry="5" fill="#A07820"/>
+          <ellipse cx="70" cy="106" rx="10" ry="5" fill="#A07820"/>
+          <!-- Listras barriga -->
+          <line x1="52" y1="72" x2="68" y2="72" stroke="#E8DFC8" stroke-width="2" stroke-linecap="round"/>
+          <line x1="50" y1="80" x2="70" y2="80" stroke="#E8DFC8" stroke-width="2" stroke-linecap="round"/>
+          <line x1="52" y1="88" x2="68" y2="88" stroke="#E8DFC8" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+  <div class="mascote-nome">Finn, o Guardião 🦉</div>
+  <div class="mascote-balao">
+    <div class="mascote-msg" id="mascote-msg">Carregando...</div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 <script src="js/app.js"></script>
 </body>
