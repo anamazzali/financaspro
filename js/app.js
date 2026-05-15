@@ -41,6 +41,57 @@ const CORES_GRAFICO = [
 const BANDEIRAS = { 'Visa':'💳','Mastercard':'💳','Elo':'💳','Amex':'💎','Hipercard':'💳','Outro':'💳' };
 
 // ================================================
+// MASCOTE — Finn, o Guardião
+// ================================================
+const MENSAGENS_MASCOTE = [
+  '💰 Cada real poupado hoje é um passo rumo à liberdade financeira!',
+  '🎯 Defina metas mensais e celebre cada conquista financeira!',
+  '📊 Quem controla seus gastos controla seu futuro!',
+  '🌱 Pequenos hábitos financeiros geram grandes resultados!',
+  '💡 Antes de comprar, pergunte: é necessidade ou vontade?',
+  '🏆 Pagar a si mesmo primeiro é o segredo dos ricos!',
+  '🔒 Sua reserva de emergência é seu melhor seguro de vida!',
+  '📈 Investir R$ 100 por mês pode virar muito em 10 anos!',
+  '✨ Organize suas finanças hoje e durma melhor amanhã!',
+  '🐷 Poupar não é privação — é dar um presente ao seu futuro!',
+  '🌟 Você está indo muito bem! Continue assim!',
+  '💪 Controlar o dinheiro é um superpoder — e você tem ele!',
+  '🎉 Registrar seus gastos é o primeiro passo para a riqueza!',
+  '🧠 Inteligência financeira se aprende — e você já está praticando!',
+  '🌈 Finanças equilibradas = vida equilibrada. Ótimo trabalho!',
+];
+
+let mascoteTimer = null;
+
+function mostrarMascote() {
+  const overlay = document.getElementById('mascote-overlay');
+  const msgEl   = document.getElementById('mascote-msg');
+  if (!overlay || !msgEl) return;
+
+  // Mensagem aleatória
+  const msg = MENSAGENS_MASCOTE[Math.floor(Math.random() * MENSAGENS_MASCOTE.length)];
+  msgEl.textContent = msg;
+
+  // Mostrar
+  overlay.classList.add('show');
+
+  // Esconder automaticamente após 2.8s
+  clearTimeout(mascoteTimer);
+  mascoteTimer = setTimeout(() => {
+    overlay.classList.remove('show');
+  }, 2800);
+
+  // Clique para fechar mais rápido
+  overlay.onclick = () => {
+    clearTimeout(mascoteTimer);
+    overlay.classList.remove('show');
+    overlay.onclick = null;
+  };
+}
+
+
+
+// ================================================
 // ESTADO
 // ================================================
 let state = {
@@ -327,6 +378,10 @@ function initNavigation() {
 }
 
 function activateView(viewName, navItem) {
+  // Verificar se está trocando de view (não é a primeira vez)
+  const viewAtual = document.querySelector('.view.active');
+  const isSwitch  = viewAtual && viewAtual.id !== 'view-' + viewName;
+
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   const nav  = navItem || document.querySelector(`.nav-item[data-view="${viewName}"]`);
@@ -344,6 +399,11 @@ function activateView(viewName, navItem) {
   if (viewName === 'lancamentos') renderLancamentos();
   if (viewName === 'cartoes')     renderCartoes();
   if (viewName === 'relatorios')  renderRelatorios();
+
+  // Mostrar mascote na troca de aba (exceto configurações)
+  if (isSwitch && viewName !== 'configuracoes') {
+    mostrarMascote();
+  }
 }
 
 // ================================================
