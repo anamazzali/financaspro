@@ -6,24 +6,62 @@
   <title>FinançasPro — Controle Financeiro Pessoal</title>
   <link rel="stylesheet" href="css/app.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async></script>
 </head>
 <body>
 
-<!-- TELA DE SENHA -->
-<div id="password-gate">
-  <div class="pw-box">
-    <span class="pw-logo-icon">💰</span>
-    <div class="pw-logo">FinançasPro</div>
-    <div class="pw-subtitle">Sistema de Controle Financeiro Pessoal</div>
-    <input type="password" id="pw-input" placeholder="••••••••••••" autocomplete="current-password">
-    <button class="pw-btn" id="pw-btn">🔓 Entrar</button>
-    <div class="pw-error" id="pw-error"></div>
-    <div class="pw-hint">💡 Senha padrão: <strong>FinancasPro2025</strong><br>Você pode alterar em Configurações.</div>
+<!-- ============================================
+     TELA DE LOGIN GOOGLE
+     ============================================ -->
+<div id="login-gate">
+  <div class="login-box">
+    <span class="login-logo">💰</span>
+    <div class="login-title">FinançasPro</div>
+    <div class="login-sub">Sistema de Controle Financeiro Pessoal</div>
+    <div class="login-divider"></div>
+    <p class="login-desc">
+      Faça login com sua conta Google para acessar<br>
+      seu sistema financeiro com segurança.
+    </p>
+
+    <!-- Botão oficial do Google -->
+    <div id="g_id_onload"
+         data-client_id="415111664058-jgshiqlt2qbidcd5frdrg59omjelkg2u.apps.googleusercontent.com"
+         data-callback="handleCredentialResponse"
+         data-auto_prompt="false">
+    </div>
+    <div class="g_id_signin"
+         data-type="standard"
+         data-size="large"
+         data-theme="filled_green"
+         data-text="signin_with"
+         data-shape="rectangular"
+         data-logo_alignment="left"
+         data-width="300">
+    </div>
+
+    <!-- Mensagem de acesso negado -->
+    <div class="acesso-negado" id="acesso-negado">
+      <p>
+        🔒 <strong>Acesso não autorizado.</strong><br>
+        Este email não está na lista de clientes autorizados.<br>
+        Para obter acesso, adquira o FinançasPro via Hotmart.
+      </p>
+    </div>
+
+    <div class="login-hint">
+      🔒 Acesso restrito a clientes autorizados<br>
+      🔐 Seus dados ficam salvos na sua conta Google<br>
+      📱 Funciona em celular e computador
+    </div>
   </div>
 </div>
 
+<!-- OVERLAY MOBILE -->
 <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
+<!-- APP PRINCIPAL -->
 <div id="app">
 
   <!-- SIDEBAR -->
@@ -63,7 +101,7 @@
     <!-- TOPBAR -->
     <div class="topbar">
       <div style="display:flex;align-items:center;gap:10px">
-        <button class="menu-toggle" id="menu-toggle" title="Abrir menu de navegação">
+        <button class="menu-toggle" id="menu-toggle">
           <span class="menu-icon">☰</span>
           <span class="menu-label">Menu</span>
         </button>
@@ -72,6 +110,10 @@
       <div class="topbar-right">
         <span class="topbar-date" id="topbar-date"></span>
         <span class="sync-status local" id="sync-status">💾 Local</span>
+        <div class="user-info" id="user-info" style="display:none">
+          <div class="user-avatar-placeholder" id="user-avatar">?</div>
+          <span class="user-name" id="user-name"></span>
+        </div>
         <button class="btn-logout" onclick="logout()">🚪 Sair</button>
       </div>
     </div>
@@ -85,12 +127,8 @@
         <button id="btn-mes-prox">Próximo ▶</button>
       </div>
 
-      <!-- ==========================================
-           VIEW: DASHBOARD
-           ========================================== -->
+      <!-- VIEW: DASHBOARD -->
       <div class="view active" id="view-dashboard">
-
-        <!-- CARDS PRINCIPAIS -->
         <div class="cards-grid">
           <div class="card receita">
             <div class="card-label">💚 Total Receitas</div>
@@ -114,7 +152,6 @@
           </div>
         </div>
 
-        <!-- CARDS DE INSIGHTS -->
         <div class="insights-grid">
           <div class="insight-card alert">
             <div class="insight-icon">🏆</div>
@@ -150,31 +187,23 @@
           </div>
         </div>
 
-        <!-- GRÁFICOS -->
         <div class="charts-grid">
           <div class="chart-box">
             <div class="chart-title">🍩 Despesas por Categoria</div>
-            <div class="chart-container">
-              <canvas id="chart-pizza"></canvas>
-            </div>
+            <div class="chart-container"><canvas id="chart-pizza"></canvas></div>
           </div>
           <div class="chart-box">
             <div class="chart-title">📊 Receitas × Despesas — Últimos 6 Meses</div>
-            <div class="chart-container">
-              <canvas id="chart-barras"></canvas>
-            </div>
+            <div class="chart-container"><canvas id="chart-barras"></canvas></div>
           </div>
         </div>
 
-        <!-- TABELAS LADO A LADO -->
         <div class="dual-table-grid">
           <div class="cat-table-box">
             <h3>🔴 Despesas por Categoria</h3>
             <div style="overflow-x:auto">
               <table class="data-table">
-                <thead>
-                  <tr><th>Categoria</th><th>Valor</th><th>%</th><th>Participação</th></tr>
-                </thead>
+                <thead><tr><th>Categoria</th><th>Valor</th><th>%</th><th>Participação</th></tr></thead>
                 <tbody id="cat-tbody"></tbody>
               </table>
             </div>
@@ -183,24 +212,16 @@
             <h3>💚 Receitas por Categoria</h3>
             <div style="overflow-x:auto">
               <table class="data-table">
-                <thead>
-                  <tr><th>Categoria</th><th>Valor</th><th>%</th><th>Participação</th></tr>
-                </thead>
+                <thead><tr><th>Categoria</th><th>Valor</th><th>%</th><th>Participação</th></tr></thead>
                 <tbody id="rec-tbody"></tbody>
               </table>
             </div>
           </div>
         </div>
-
       </div>
-      <!-- /view-dashboard -->
 
-      <!-- ==========================================
-           VIEW: LANÇAMENTOS
-           ========================================== -->
+      <!-- VIEW: LANÇAMENTOS -->
       <div class="view" id="view-lancamentos">
-
-        <!-- FORMULÁRIO -->
         <div class="form-section">
           <div class="form-title">➕ Novo Lançamento</div>
           <div class="tipo-toggle">
@@ -241,38 +262,23 @@
           </div>
         </div>
 
-        <!-- FILTROS E PESQUISA -->
         <div class="list-section">
           <div class="list-header">
             <div class="list-title">📋 Lançamentos do Período</div>
           </div>
-
-          <!-- MODO DE FILTRO -->
           <div class="filter-mode-toggle">
-            <button class="filter-mode-btn active" id="btn-modo-mes" onclick="setFilterMode('mes')">
-              📅 Por Mês
-            </button>
-            <button class="filter-mode-btn" id="btn-modo-periodo" onclick="setFilterMode('periodo')">
-              🔍 Por Período
-            </button>
+            <button class="filter-mode-btn active" id="btn-modo-mes" onclick="setFilterMode('mes')">📅 Por Mês</button>
+            <button class="filter-mode-btn" id="btn-modo-periodo" onclick="setFilterMode('periodo')">🔍 Por Período</button>
           </div>
-
-          <!-- FILTROS DO MÊS -->
           <div class="filters-row" id="filters-mes">
             <select class="filter-select" id="filter-tipo">
               <option value="todos">Todos os tipos</option>
               <option value="receita">Receitas</option>
               <option value="despesa">Despesas</option>
             </select>
-            <select class="filter-select" id="filter-cat">
-              <option value="todas">Todas as categorias</option>
-            </select>
-            <select class="filter-select" id="filter-cartao-lista">
-              <option value="todos">Todos os cartões</option>
-            </select>
+            <select class="filter-select" id="filter-cat"><option value="todas">Todas as categorias</option></select>
+            <select class="filter-select" id="filter-cartao-lista"><option value="todos">Todos os cartões</option></select>
           </div>
-
-          <!-- FILTROS DE PERÍODO -->
           <div class="filters-row" id="filters-periodo" style="display:none">
             <div class="periodo-inputs">
               <div class="form-group" style="margin:0">
@@ -288,39 +294,27 @@
                 <option value="receita">Receitas</option>
                 <option value="despesa">Despesas</option>
               </select>
-              <select class="filter-select" id="filter-cat-periodo">
-                <option value="todas">Todas as categorias</option>
-              </select>
-              <button class="btn-primary" style="padding:8px 20px;font-size:0.85rem" onclick="renderLancamentos()">
-                🔍 Buscar
-              </button>
+              <select class="filter-select" id="filter-cat-periodo"><option value="todas">Todas as categorias</option></select>
+              <button class="btn-primary" style="padding:8px 20px;font-size:0.85rem" onclick="renderLancamentos()">🔍 Buscar</button>
             </div>
-            <!-- Resumo do período -->
             <div class="periodo-resumo" id="periodo-resumo" style="display:none">
               <span class="resumo-item pos">💚 <span id="res-rec">R$ 0,00</span></span>
               <span class="resumo-item neg">🔴 <span id="res-desp">R$ 0,00</span></span>
               <span class="resumo-item neu">💛 <span id="res-saldo">R$ 0,00</span></span>
-              <span class="resumo-item info">📋 <span id="res-qtd">0 lançamentos</span></span>
+              <span class="resumo-item info">📋 <span id="res-qtd">0</span></span>
             </div>
           </div>
-
           <div id="transactions-list">
             <div class="empty-state">
               <span class="empty-icon">📋</span>
               <p>Nenhum lançamento ainda.</p>
-              <p style="font-size:0.8rem;margin-top:8px">Use o formulário acima para adicionar o primeiro!</p>
             </div>
           </div>
         </div>
       </div>
-      <!-- /view-lancamentos -->
 
-      <!-- ==========================================
-           VIEW: CARTÕES
-           ========================================== -->
+      <!-- VIEW: CARTÕES -->
       <div class="view" id="view-cartoes">
-
-        <!-- FORMULÁRIO NOVO CARTÃO -->
         <div class="form-section">
           <div class="form-title">💳 Cadastrar Cartão de Crédito</div>
           <div class="form-grid">
@@ -361,66 +355,37 @@
             <button class="btn-secondary" onclick="limparFormCartao()">🔄 Limpar</button>
           </div>
         </div>
-
-        <!-- NAVEGAÇÃO FATURA -->
         <div class="fatura-nav">
-          <button onclick="faturaAnterior()">◀ Fatura Anterior</button>
+          <button onclick="faturaAnterior()">◀ Anterior</button>
           <span class="fatura-label" id="fatura-label">Fatura Atual</span>
-          <button onclick="faturaProxima()">Próxima Fatura ▶</button>
+          <button onclick="faturaProxima()">Próxima ▶</button>
         </div>
-
-        <!-- LISTA DE CARTÕES -->
         <div id="cartoes-lista">
           <div class="empty-state">
             <span class="empty-icon">💳</span>
             <p>Nenhum cartão cadastrado.</p>
-            <p style="font-size:0.8rem;margin-top:8px">Adicione seu primeiro cartão acima!</p>
           </div>
         </div>
-
       </div>
-      <!-- /view-cartoes -->
 
-      <!-- ==========================================
-           VIEW: RELATÓRIOS
-           ========================================== -->
+      <!-- VIEW: RELATÓRIOS -->
       <div class="view" id="view-relatorios">
-
-        <!-- CARDS RESUMO -->
         <div class="rel-summary">
-          <div class="rel-card pos">
-            <div class="label">💚 Receitas</div>
-            <div class="value" id="rel-receitas">R$ 0,00</div>
-          </div>
-          <div class="rel-card neg">
-            <div class="label">🔴 Despesas</div>
-            <div class="value" id="rel-despesas">R$ 0,00</div>
-          </div>
-          <div class="rel-card neu">
-            <div class="label">💛 Saldo</div>
-            <div class="value" id="rel-saldo">R$ 0,00</div>
-          </div>
-          <div class="rel-card info">
-            <div class="label">📊 Economia</div>
-            <div class="value" id="rel-economia">0%</div>
-          </div>
+          <div class="rel-card pos"><div class="label">💚 Receitas</div><div class="value" id="rel-receitas">R$ 0,00</div></div>
+          <div class="rel-card neg"><div class="label">🔴 Despesas</div><div class="value" id="rel-despesas">R$ 0,00</div></div>
+          <div class="rel-card neu"><div class="label">💛 Saldo</div><div class="value" id="rel-saldo">R$ 0,00</div></div>
+          <div class="rel-card info"><div class="label">📊 Economia</div><div class="value" id="rel-economia">0%</div></div>
         </div>
-
-        <!-- INSIGHTS DO RELATÓRIO -->
         <div class="cat-table-box" id="rel-insights-box">
           <h3>💡 Análise do Mês — <span id="rel-mes-label"></span></h3>
           <div id="rel-insights"></div>
         </div>
-
-        <!-- TABELAS LADO A LADO -->
         <div class="dual-table-grid">
           <div class="cat-table-box">
             <h3>🔴 Despesas por Categoria</h3>
             <div style="overflow-x:auto">
               <table class="data-table">
-                <thead>
-                  <tr><th>Categoria</th><th>Valor</th><th>%</th></tr>
-                </thead>
+                <thead><tr><th>Categoria</th><th>Valor</th><th>%</th></tr></thead>
                 <tbody id="rel-cat-tbody"></tbody>
               </table>
             </div>
@@ -429,37 +394,40 @@
             <h3>💚 Receitas por Categoria</h3>
             <div style="overflow-x:auto">
               <table class="data-table">
-                <thead>
-                  <tr><th>Categoria</th><th>Valor</th><th>%</th></tr>
-                </thead>
+                <thead><tr><th>Categoria</th><th>Valor</th><th>%</th></tr></thead>
                 <tbody id="rel-rec-tbody"></tbody>
               </table>
             </div>
           </div>
         </div>
-
-        <!-- TOP 5 MAIORES DESPESAS -->
         <div class="cat-table-box">
           <h3>🏆 Top 5 Maiores Despesas do Mês</h3>
           <div style="overflow-x:auto">
             <table class="data-table">
-              <thead>
-                <tr><th>#</th><th>Descrição</th><th>Categoria</th><th>Data</th><th>Valor</th></tr>
-              </thead>
+              <thead><tr><th>#</th><th>Descrição</th><th>Categoria</th><th>Data</th><th>Valor</th></tr></thead>
               <tbody id="rel-top5-tbody"></tbody>
             </table>
           </div>
         </div>
-
       </div>
-      <!-- /view-relatorios -->
 
-      <!-- ==========================================
-           VIEW: CONFIGURAÇÕES
-           ========================================== -->
+      <!-- VIEW: CONFIGURAÇÕES -->
       <div class="view" id="view-configuracoes">
         <div class="settings-grid">
 
+          <!-- Conta Google -->
+          <div class="settings-card">
+            <h3>👤 Conta Google</h3>
+            <div class="info-box">
+              <strong>Usuário logado:</strong><br>
+              <span id="config-user-email" style="color:var(--verde-medio)">—</span><br><br>
+              Seus dados estão vinculados à sua conta Google.<br>
+              Acesse de qualquer dispositivo fazendo login com o mesmo Gmail.
+            </div>
+            <button class="btn-danger" style="margin-top:14px" onclick="logout()">🚪 Sair da Conta</button>
+          </div>
+
+          <!-- Google Sheets -->
           <div class="settings-card">
             <h3>☁️ Google Sheets — Sincronização</h3>
             <div class="sheets-config-box">
@@ -469,31 +437,17 @@
                 <button class="btn-sheets" onclick="salvarUrlSheets()">✅ Conectar</button>
                 <button class="btn-sync" onclick="sincronizarAgora()">🔄 Sync</button>
               </div>
-              <div class="sheets-hint">💡 Cole a URL do Web App do Google Apps Script para salvar na nuvem.</div>
+              <div class="sheets-hint">
+                💡 Após conectar, seus dados são salvos automaticamente no Google Sheets vinculado ao seu Gmail.
+              </div>
             </div>
           </div>
 
-          <div class="settings-card">
-            <h3>🔐 Alterar Senha</h3>
-            <div class="settings-field">
-              <label>Senha Atual</label>
-              <input type="password" id="senha-atual" placeholder="Senha atual">
-            </div>
-            <div class="settings-field">
-              <label>Nova Senha</label>
-              <input type="password" id="senha-nova" placeholder="Mínimo 6 caracteres">
-            </div>
-            <div class="settings-field">
-              <label>Confirmar Nova Senha</label>
-              <input type="password" id="senha-confirma" placeholder="Repita a nova senha">
-            </div>
-            <button class="btn-success" onclick="alterarSenha()">✅ Salvar Nova Senha</button>
-          </div>
-
+          <!-- Backup -->
           <div class="settings-card">
             <h3>💾 Backup e Restauração</h3>
             <div class="info-box" style="margin-bottom:18px">
-              Exporte seus dados para backup. Inclui lançamentos e cartões.
+              Exporte todos seus dados para um arquivo de backup local.
             </div>
             <button class="btn-info" onclick="exportarDados()">📥 Exportar (JSON)</button>
             <button class="btn-secondary" onclick="importarDados()" style="width:100%;margin-top:8px;padding:11px">
@@ -501,6 +455,7 @@
             </button>
           </div>
 
+          <!-- Zona de perigo -->
           <div class="settings-card">
             <h3>⚠️ Zona de Perigo</h3>
             <div class="info-box" style="margin-bottom:18px;border-color:var(--vermelho)">
@@ -509,14 +464,15 @@
             <button class="btn-danger" onclick="limparTodosDados()">🗑️ Apagar Todos os Dados</button>
           </div>
 
+          <!-- Sobre -->
           <div class="settings-card">
             <h3>ℹ️ Sobre o FinançasPro</h3>
             <div class="info-box">
               <strong>FinançasPro v2.0</strong><br><br>
               📱 Celular e computador<br>
-              🔒 Dados locais + nuvem (Google Sheets)<br>
-              💳 Controle de cartões de crédito<br>
-              🔑 Senha padrão: FinancasPro2025<br><br>
+              🔐 Login seguro com Google<br>
+              ☁️ Dados salvos no Google Sheets<br>
+              💳 Controle de cartões de crédito<br><br>
               <em>Distribuído via Hotmart.</em>
             </div>
           </div>
@@ -528,49 +484,34 @@
   </div>
 </div>
 
-
-<!-- ============================================
-     MASCOTE — Aparece na troca de páginas
-     ============================================ -->
+<!-- MASCOTE -->
 <div id="mascote-overlay">
   <div class="mascote-ring-outer">
     <div class="mascote-ring-inner">
       <div class="mascote-char">
         <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" width="110" height="110">
-          <!-- Corpo do mascote (corujinha) -->
-          <!-- Corpo oval -->
           <ellipse cx="60" cy="72" rx="32" ry="36" fill="#D4AF37"/>
-          <!-- Barriga -->
           <ellipse cx="60" cy="78" rx="20" ry="24" fill="#FAF6EE"/>
-          <!-- Cabeça redonda -->
           <circle cx="60" cy="40" r="28" fill="#D4AF37"/>
-          <!-- Orelhas (tufos) -->
           <ellipse cx="38" cy="16" rx="9" ry="14" fill="#D4AF37" transform="rotate(-20,38,16)"/>
           <ellipse cx="82" cy="16" rx="9" ry="14" fill="#D4AF37" transform="rotate(20,82,16)"/>
           <ellipse cx="38" cy="15" rx="5" ry="9" fill="#A07820" transform="rotate(-20,38,15)"/>
           <ellipse cx="82" cy="15" rx="5" ry="9" fill="#A07820" transform="rotate(20,82,15)"/>
-          <!-- Olhos grandes -->
           <circle cx="47" cy="38" r="11" fill="#1B4332"/>
           <circle cx="73" cy="38" r="11" fill="#1B4332"/>
           <circle cx="47" cy="38" r="7" fill="#FAF6EE"/>
           <circle cx="73" cy="38" r="7" fill="#FAF6EE"/>
           <circle cx="49" cy="36" r="4" fill="#1A1A2E"/>
           <circle cx="75" cy="36" r="4" fill="#1A1A2E"/>
-          <!-- Brilho dos olhos -->
           <circle cx="51" cy="34" r="1.5" fill="white"/>
           <circle cx="77" cy="34" r="1.5" fill="white"/>
-          <!-- Bico -->
           <polygon points="60,46 54,52 66,52" fill="#A07820"/>
-          <!-- Asas -->
           <ellipse cx="30" cy="76" rx="12" ry="22" fill="#A07820" transform="rotate(-15,30,76)"/>
           <ellipse cx="90" cy="76" rx="12" ry="22" fill="#A07820" transform="rotate(15,90,76)"/>
-          <!-- Moeda na asa -->
           <circle cx="90" cy="80" r="10" fill="#D4AF37" stroke="#A07820" stroke-width="2"/>
           <text x="90" y="84" text-anchor="middle" font-size="10" font-weight="bold" fill="#1B4332">R$</text>
-          <!-- Pés -->
           <ellipse cx="50" cy="106" rx="10" ry="5" fill="#A07820"/>
           <ellipse cx="70" cy="106" rx="10" ry="5" fill="#A07820"/>
-          <!-- Listras barriga -->
           <line x1="52" y1="72" x2="68" y2="72" stroke="#E8DFC8" stroke-width="2" stroke-linecap="round"/>
           <line x1="50" y1="80" x2="70" y2="80" stroke="#E8DFC8" stroke-width="2" stroke-linecap="round"/>
           <line x1="52" y1="88" x2="68" y2="88" stroke="#E8DFC8" stroke-width="2" stroke-linecap="round"/>
@@ -580,7 +521,7 @@
   </div>
   <div class="mascote-nome">Finn, o Guardião 🦉</div>
   <div class="mascote-balao">
-    <div class="mascote-msg" id="mascote-msg">Carregando...</div>
+    <div class="mascote-msg" id="mascote-msg">Bem-vindo!</div>
   </div>
 </div>
 
