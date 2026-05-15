@@ -1215,3 +1215,133 @@ body {
   .cartao-valores { gap: 16px; }
   .periodo-inputs { flex-direction: column; }
 }
+
+/* ================================================
+   MASCOTE — Finn, o Guardião
+   ================================================ */
+#mascote-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(13, 43, 30, 0.88);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 8888;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+  backdrop-filter: blur(4px);
+}
+#mascote-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Anel externo que gira */
+.mascote-ring-outer {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  border: 5px solid var(--dourado);
+  border-top-color: transparent;
+  border-bottom-color: transparent;
+  animation: spin-anel 2.5s linear infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: 0 0 24px rgba(212,175,55,0.4);
+}
+
+/* Anel interno que gira ao contrário */
+.mascote-ring-inner {
+  width: 155px;
+  height: 155px;
+  border-radius: 50%;
+  border: 3px solid rgba(212,175,55,0.4);
+  border-left-color: transparent;
+  border-right-color: transparent;
+  animation: spin-anel-inv 1.8s linear infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(27, 67, 50, 0.6);
+}
+
+/* O mascote fica estático dentro */
+.mascote-char {
+  animation: nenhum;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4));
+}
+
+/* Bounce sutil no mascote */
+.mascote-char svg {
+  animation: mascote-bounce 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes spin-anel {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes spin-anel-inv {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(-360deg); }
+}
+@keyframes mascote-bounce {
+  from { transform: translateY(0px) scale(1); }
+  to   { transform: translateY(-6px) scale(1.03); }
+}
+@keyframes mascote-entrada {
+  from { transform: scale(0.7) translateY(20px); opacity: 0; }
+  to   { transform: scale(1) translateY(0);     opacity: 1; }
+}
+
+.mascote-nome {
+  color: var(--dourado);
+  font-size: 0.9rem;
+  font-weight: bold;
+  margin-top: 18px;
+  letter-spacing: 1px;
+  animation: mascote-entrada 0.4s 0.1s both ease-out;
+}
+
+.mascote-balao {
+  background: var(--branco);
+  border-radius: 16px;
+  padding: 14px 22px;
+  max-width: 320px;
+  margin-top: 14px;
+  position: relative;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.3);
+  animation: mascote-entrada 0.4s 0.2s both ease-out;
+}
+.mascote-balao::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 10px solid transparent;
+  border-bottom-color: var(--branco);
+  border-top: 0;
+}
+.mascote-msg {
+  font-family: Tahoma, sans-serif;
+  font-size: 0.88rem;
+  color: var(--verde-escuro);
+  text-align: center;
+  line-height: 1.6;
+  font-weight: bold;
+}
+
+/* Estrelinhas ao redor do anel */
+.mascote-ring-outer::before,
+.mascote-ring-outer::after {
+  content: '✨';
+  position: absolute;
+  font-size: 1.2rem;
+  animation: spin-anel 2.5s linear infinite reverse;
+}
+.mascote-ring-outer::before { top: -15px; left: 50%; transform: translateX(-50%); }
+.mascote-ring-outer::after  { bottom: -15px; left: 50%; transform: translateX(-50%); }
