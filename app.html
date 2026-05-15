@@ -239,6 +239,19 @@
                 <option value="">Nenhum (débito/espécie)</option>
               </select>
             </div>
+            <div class="form-group">
+              <label>Forma de Pagamento</label>
+              <select id="form-pagamento">
+                <option value="">Selecione...</option>
+                <option value="💳 Cartão de Crédito">💳 Cartão de Crédito</option>
+                <option value="💳 Cartão de Débito">💳 Cartão de Débito</option>
+                <option value="🏦 PIX">🏦 PIX</option>
+                <option value="🔄 Transferência">🔄 Transferência</option>
+                <option value="📄 Boleto">📄 Boleto</option>
+                <option value="💵 Dinheiro / Espécie">💵 Dinheiro / Espécie</option>
+                <option value="🏧 Depósito">🏧 Depósito</option>
+              </select>
+            </div>
             <div class="form-group" style="grid-column:1/-1">
               <label>Observação</label>
               <input type="text" id="form-obs" placeholder="Opcional">
@@ -266,6 +279,16 @@
             </select>
             <select class="filter-select" id="filter-cat"><option value="todas">Todas as categorias</option></select>
             <select class="filter-select" id="filter-cartao-lista"><option value="todos">Todos os cartões</option></select>
+            <select class="filter-select" id="filter-pagamento">
+              <option value="todas">Todas as formas</option>
+              <option value="💳 Cartão de Crédito">💳 Crédito</option>
+              <option value="💳 Cartão de Débito">💳 Débito</option>
+              <option value="🏦 PIX">🏦 PIX</option>
+              <option value="🔄 Transferência">🔄 Transferência</option>
+              <option value="📄 Boleto">📄 Boleto</option>
+              <option value="💵 Dinheiro / Espécie">💵 Dinheiro</option>
+              <option value="🏧 Depósito">🏧 Depósito</option>
+            </select>
           </div>
           <div class="filters-row" id="filters-periodo" style="display:none">
             <div class="periodo-inputs">
