@@ -112,7 +112,6 @@ let charts = { pie: null, bar: null };
 // ================================================
 document.addEventListener('DOMContentLoaded', () => {
   autoSetupFromURL();
-  initPasswordGate();
   initNavigation();
   initForm();
   initMonthNav();
@@ -120,6 +119,12 @@ document.addEventListener('DOMContentLoaded', () => {
   initMobileMenu();
   updateTopbarDate();
   initPeriodoFiltro();
+
+  // Verifica sessão salva ou aguarda login Google
+  if (!checkExistingSession()) {
+    // Garante que a tela de login está visível
+    document.getElementById('login-gate').style.display = 'flex';
+  }
 });
 
 function autoSetupFromURL() {
@@ -161,54 +166,118 @@ function initMobileMenu() {
 }
 
 // ================================================
-// SENHA
+// GOOGLE AUTHENTICATION
 // ================================================
-function initPasswordGate() {
-  const gate  = document.getElementById('password-gate');
-  const input = document.getElementById('pw-input');
-  const btn   = document.getElementById('pw-btn');
-  const error = document.getElementById('pw-error');
-  const box   = document.querySelector('.pw-box');
-  if (!gate) return;
 
-  function tryLogin() {
-    const ok = localStorage.getItem('fp_senha') || SENHA_PADRAO;
-    if (input.value === ok) {
-      gate.style.display = 'none';
-      loadData();
+// Chamado pelo Google Identity Services após login
+function handleCredentialResponse(response) {
+  try {
+    // Decodifica o JWT do Google
+    const payload = parseJwt(response.credential);
+    const email   = payload.email;
+    const name    = payload.name;
+    const picture = payload.picture;
+
+    // Salva usuário no estado e no localStorage
+    state.currentUser = { email, name, picture };
+    localStorage.setItem('fp_user', JSON.stringify({ email, name, picture }));
+
+    // Atualiza a UI
+    mostrarInfoUsuario(email, name, picture);
+
+    // Esconde login, mostra app
+    document.getElementById('login-gate').style.display = 'none';
+    document.getElementById('acesso-negado').classList.remove('show');
+
+    // Carrega os dados do usuário
+    loadData();
+
+  } catch(err) {
+    console.error('Erro no login:', err);
+    document.getElementById('acesso-negado').classList.add('show');
+  }
+}
+
+function parseJwt(token) {
+  const base64 = token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+  return JSON.parse(decodeURIComponent(
+    atob(base64).split('').map(c =>
+      '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+    ).join('')
+  ));
+}
+
+function mostrarInfoUsuario(email, name, picture) {
+  // Topbar
+  const userInfo   = document.getElementById('user-info');
+  const userAvatar = document.getElementById('user-avatar');
+  const userName   = document.getElementById('user-name');
+  if (userInfo)   userInfo.style.display = 'flex';
+  if (userName)   userName.textContent = name?.split(' ')[0] || email.split('@')[0];
+  if (userAvatar) {
+    if (picture) {
+      userAvatar.outerHTML = `<img src="${picture}" class="user-avatar" id="user-avatar" alt="Foto">`;
     } else {
-      error.textContent = '❌ Senha incorreta.';
-      box.classList.remove('shake');
-      void box.offsetWidth;
-      box.classList.add('shake');
-      setTimeout(() => box.classList.remove('shake'), 500);
-      input.value = '';
-      input.focus();
+      userAvatar.textContent = (name||email)[0].toUpperCase();
     }
   }
-  btn.addEventListener('click', tryLogin);
-  input.addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
+  // Config
+  const configEmail = document.getElementById('config-user-email');
+  if (configEmail) configEmail.textContent = email;
 }
 
 function logout() {
-  const gate = document.getElementById('password-gate');
-  const input = document.getElementById('pw-input');
-  if (gate) gate.style.display = 'flex';
-  if (input) { input.value = ''; input.focus(); }
-  document.getElementById('pw-error').textContent = '';
+  // Limpa estado
+  state.currentUser = null;
+  state.transactions = [];
+  state.cartoes = [];
+  localStorage.removeItem('fp_user');
+
+  // Revoga token do Google
+  if (window.google?.accounts?.id) {
+    google.accounts.id.disableAutoSelect();
+  }
+
+  // Volta para tela de login
+  document.getElementById('login-gate').style.display = 'flex';
+  document.getElementById('acesso-negado').classList.remove('show');
+  showToast('👋 Você saiu da conta.');
+}
+
+// Verificar se já estava logado (sessão anterior)
+function checkExistingSession() {
+  const saved = localStorage.getItem('fp_user');
+  if (saved) {
+    try {
+      const user = JSON.parse(saved);
+      state.currentUser = user;
+      mostrarInfoUsuario(user.email, user.name, user.picture);
+      document.getElementById('login-gate').style.display = 'none';
+      loadData();
+      return true;
+    } catch { localStorage.removeItem('fp_user'); }
+  }
+  return false;
 }
 
 // ================================================
 // LOCALSTORAGE
 // ================================================
-function loadLocalStorage() {
-  try { return JSON.parse(localStorage.getItem('fp_transactions') || '[]'); } catch { return []; }
+function emailKey(base, email) {
+  return base + '_' + (email||'local').replace(/[@.]/g,'_');
 }
-function saveLocalStorage(t) { localStorage.setItem('fp_transactions', JSON.stringify(t)); }
-function loadCartoesLocal() {
-  try { return JSON.parse(localStorage.getItem('fp_cartoes') || '[]'); } catch { return []; }
+function loadLocalStorage(email) {
+  try { return JSON.parse(localStorage.getItem(emailKey('fp_tx', email)) || '[]'); } catch { return []; }
 }
-function saveCartoesLocal(c) { localStorage.setItem('fp_cartoes', JSON.stringify(c)); }
+function saveLocalStorage(t, email) {
+  localStorage.setItem(emailKey('fp_tx', email), JSON.stringify(t));
+}
+function loadCartoesLocal(email) {
+  try { return JSON.parse(localStorage.getItem(emailKey('fp_cartoes', email)) || '[]'); } catch { return []; }
+}
+function saveCartoesLocal(c, email) {
+  localStorage.setItem(emailKey('fp_cartoes', email), JSON.stringify(c));
+}
 
 // ================================================
 // GOOGLE SHEETS
@@ -226,10 +295,11 @@ async function testarConexaoSheets() {
 
 async function loadSheets() {
   if (!SHEETS_URL) return null;
+  const email = state.currentUser?.email || '';
   try {
     const r = await fetch(SHEETS_URL, {
       method:'POST', headers:{'Content-Type':'text/plain'},
-      body: JSON.stringify({action:'load'})
+      body: JSON.stringify({action:'load', email})
     });
     const d = await r.json();
     if (d.ok && Array.isArray(d.transactions)) return d.transactions;
@@ -239,10 +309,11 @@ async function loadSheets() {
 
 async function saveSheets(transactions) {
   if (!SHEETS_URL) return false;
+  const email = state.currentUser?.email || '';
   try {
     const r = await fetch(SHEETS_URL, {
       method:'POST', headers:{'Content-Type':'text/plain'},
-      body: JSON.stringify({action:'save', transactions})
+      body: JSON.stringify({action:'save', email, transactions})
     });
     return (await r.json()).ok === true;
   } catch { return false; }
@@ -253,9 +324,11 @@ async function saveSheets(transactions) {
 // ================================================
 async function loadData() {
   setSyncStatus('Carregando...', 'info');
-  const localData = loadLocalStorage();
+  // Dados são por usuário (chave = email)
+  const email = state.currentUser?.email || 'local';
+  const localData = loadLocalStorage(email);
   state.transactions = localData;
-  state.cartoes = loadCartoesLocal();
+  state.cartoes = loadCartoesLocal(email);
   renderAll();
 
   if (SHEETS_URL) {
@@ -288,8 +361,9 @@ async function loadData() {
 }
 
 async function saveData() {
-  saveLocalStorage(state.transactions);
-  saveCartoesLocal(state.cartoes);
+  const email = state.currentUser?.email || 'local';
+  saveLocalStorage(state.transactions, email);
+  saveCartoesLocal(state.cartoes, email);
   if (SHEETS_URL && state.sheetsConectado) {
     const ok = await saveSheets(state.transactions);
     setSyncStatus(ok ? '✅ Salvo no Sheets' : '⚠️ Salvo local', ok ? 'success' : 'warning');
