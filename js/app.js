@@ -3,7 +3,14 @@
 // ================================================
 // CONSTANTES
 // ================================================
-let SHEETS_URL = localStorage.getItem('fp_sheets_url') || '';
+// URL do Apps Script — configurada automaticamente para todos os dispositivos
+const SHEETS_URL_PADRAO = 'https://script.google.com/macros/s/AKfycbwWkH8uuoAfoLVS-gAL3eSvBrP6juUUq5ucK1x2KLWgqqoxb87VxdLrwjWM2G9NIS70/exec';
+let SHEETS_URL = localStorage.getItem('fp_sheets_url') || SHEETS_URL_PADRAO;
+
+// Garante que a URL padrão sempre fica salva no localStorage
+if (!localStorage.getItem('fp_sheets_url')) {
+  localStorage.setItem('fp_sheets_url', SHEETS_URL_PADRAO);
+}
 
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
                'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -39,6 +46,8 @@ const FORMAS_PAGAMENTO = [
   '📄 Boleto',
   '💵 Dinheiro / Espécie',
   '🏧 Depósito',
+  '🍽️ Vale Alimentação / Refeição',
+  '🚌 Vale Transporte',
 ];
 
 const CORES_GRAFICO = [
@@ -404,6 +413,12 @@ async function loadData() {
   // MIGRAÇÃO: copia dados da chave antiga para a nova (roda só 1x por email)
   migrarDadosAntigos(email);
 
+  // Carrega cancelamentos de recorrentes
+  try {
+    const rc = localStorage.getItem(emailKey('fp_recorr', email));
+    state.recorrCancelados = rc ? JSON.parse(rc) : {};
+  } catch { state.recorrCancelados = {}; }
+
   const localData = loadLocalStorage(email);
   state.transactions = localData;
   state.cartoes      = loadCartoesLocal(email);
@@ -523,10 +538,46 @@ async function deleteTransaction(id) {
 function getTransacoesMes(mes, ano) {
   const m = mes !== undefined ? mes : state.mesAtual;
   const a = ano  !== undefined ? ano  : state.anoAtual;
+
+  // Data início do mês solicitado
+  const inicioMes = new Date(a, m, 1);
+
   return state.transactions.filter(t => {
     const d = new Date(t.data + 'T00:00:00');
-    return d.getMonth() === m && d.getFullYear() === a;
+
+    // Lançamento normal: mesmo mês e ano
+    if (d.getMonth() === m && d.getFullYear() === a) return true;
+
+    // Lançamento RECORRENTE: criado antes ou no mesmo mês solicitado
+    if (t.recorrente && d <= inicioMes) {
+      // Verifica se não foi cancelado neste mês específico
+      const cancelados = state.recorrCancelados || {};
+      const chave = t.id + '_' + a + '_' + m;
+      if (cancelados[chave]) return false;
+      return true;
+    }
+
+    return false;
+  }).map(t => {
+    // Para recorrentes em mês diferente, ajusta a data de exibição
+    const d = new Date(t.data + 'T00:00:00');
+    if (t.recorrente && !(d.getMonth() === m && d.getFullYear() === a)) {
+      const novaData = a + '-' + String(m + 1).padStart(2,'0') + '-' + String(t.diaRecorr || d.getDate()).padStart(2,'0');
+      return { ...t, data: novaData, isRecorrente: true };
+    }
+    return t;
   });
+}
+
+// Cancela um recorrente num mês específico
+function cancelarRecorrente(id, mes, ano) {
+  if (!state.recorrCancelados) state.recorrCancelados = {};
+  const chave = id + '_' + ano + '_' + mes;
+  state.recorrCancelados[chave] = true;
+  const email = state.currentUser?.email || 'local';
+  localStorage.setItem(emailKey('fp_recorr', email), JSON.stringify(state.recorrCancelados));
+  renderAll();
+  showToast('↩️ Recorrente cancelado para este mês.');
 }
 
 // FILTRO POR PERÍODO
@@ -662,14 +713,16 @@ async function salvarLancamento() {
   const data      = document.getElementById('form-data')?.value;
   const obs       = document.getElementById('form-obs')?.value.trim();
   const cartaoId  = document.getElementById('form-cartao')?.value || '';
-  const pagamento = document.getElementById('form-pagamento')?.value || '';
+  const pagamento   = document.getElementById('form-pagamento')?.value || '';
+  const recorrente  = document.getElementById('form-recorrente')?.checked || false;
+  const diaRecorr   = recorrente ? new Date(data + 'T00:00:00').getDate() : null;
 
   if (!desc)              { showToast('⚠️ Informe a descrição.');    return; }
   if (!valor || valor<=0) { showToast('⚠️ Informe um valor válido.'); return; }
   if (!categoria)         { showToast('⚠️ Selecione uma categoria.'); return; }
   if (!data)              { showToast('⚠️ Informe a data.');          return; }
 
-  await addTransaction({ tipo, desc, valor, categoria, data, obs, cartaoId, pagamento });
+  await addTransaction({ tipo, desc, valor, categoria, data, obs, cartaoId, pagamento, recorrente, diaRecorr });
   limparForm();
 }
 
@@ -931,12 +984,15 @@ function renderTransactionList(txs) {
     return `<div class="transaction-item">
       <div class="trans-icon ${t.tipo}">${ICONES[t.categoria]||'📌'}</div>
       <div class="trans-info">
-        <div class="trans-desc">${escapeHtml(t.desc)} ${cartaoTag}</div>
+        <div class="trans-desc">${escapeHtml(t.desc)} ${cartaoTag}${t.recorrente?'<span class="badge-recorrente" title="Lançamento recorrente">🔄 Recorrente</span>':''}</div>
         <div class="trans-cat">${t.categoria}${t.pagamento?' · '+escapeHtml(t.pagamento):''}${t.obs?' · '+escapeHtml(t.obs):''}</div>
       </div>
       <div class="trans-date">${formatData(t.data)}</div>
       <div class="trans-value ${t.tipo}">${t.tipo==='receita'?'+':'-'} ${formatMoeda(t.valor)}</div>
-      <button class="btn-del" onclick="deleteTransaction(${t.id})">🗑️</button>
+      ${t.isRecorrente
+        ? `<button class="btn-del btn-cancelar-recorr" title="Cancelar neste mês" onclick="cancelarRecorrente(${t.id},${state.mesAtual},${state.anoAtual})">⏸️</button>`
+        : `<button class="btn-del" onclick="deleteTransaction(${t.id})">🗑️</button>`
+      }
     </div>`;
   }).join('');
 }
