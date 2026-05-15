@@ -250,11 +250,25 @@
                 <option value="📄 Boleto">📄 Boleto</option>
                 <option value="💵 Dinheiro / Espécie">💵 Dinheiro / Espécie</option>
                 <option value="🏧 Depósito">🏧 Depósito</option>
+                <option value="🍽️ Vale Alimentação / Refeição">🍽️ Vale Alimentação / Refeição</option>
+                <option value="🚌 Vale Transporte">🚌 Vale Transporte</option>
               </select>
             </div>
             <div class="form-group" style="grid-column:1/-1">
               <label>Observação</label>
               <input type="text" id="form-obs" placeholder="Opcional">
+            </div>
+            <div class="form-group" style="grid-column:1/-1">
+              <div class="recorrente-toggle">
+                <label class="recorrente-label">
+                  <input type="checkbox" id="form-recorrente">
+                  <span class="recorrente-check">🔄</span>
+                  <div>
+                    <strong>Lançamento Recorrente</strong>
+                    <span>Aparece automaticamente todo mês neste mesmo dia</span>
+                  </div>
+                </label>
+              </div>
             </div>
           </div>
           <div class="form-actions">
@@ -288,6 +302,8 @@
               <option value="📄 Boleto">📄 Boleto</option>
               <option value="💵 Dinheiro / Espécie">💵 Dinheiro</option>
               <option value="🏧 Depósito">🏧 Depósito</option>
+              <option value="🍽️ Vale Alimentação / Refeição">🍽️ Vale</option>
+              <option value="🚌 Vale Transporte">🚌 Vale Transp.</option>
             </select>
           </div>
           <div class="filters-row" id="filters-periodo" style="display:none">
