@@ -3,7 +3,6 @@
 // ================================================
 // CONSTANTES
 // ================================================
-const SENHA_PADRAO = 'FinancasPro2025';
 let SHEETS_URL = localStorage.getItem('fp_sheets_url') || '';
 
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
@@ -1206,20 +1205,7 @@ function renderCategoryTableRel(txs, total, tbodyId) {
 // ================================================
 // CONFIGURAÇÕES
 // ================================================
-function alterarSenha() {
-  const atual    = document.getElementById('senha-atual')?.value;
-  const nova     = document.getElementById('senha-nova')?.value;
-  const confirma = document.getElementById('senha-confirma')?.value;
-  const ok = localStorage.getItem('fp_senha') || SENHA_PADRAO;
-  if (atual !== ok)      { showToast('❌ Senha atual incorreta.');   return; }
-  if (nova.length < 6)   { showToast('⚠️ Mínimo 6 caracteres.');    return; }
-  if (nova !== confirma) { showToast('⚠️ As senhas não coincidem.'); return; }
-  localStorage.setItem('fp_senha', nova);
-  ['senha-atual','senha-nova','senha-confirma'].forEach(id => {
-    document.getElementById(id).value = '';
-  });
-  showToast('✅ Senha alterada!');
-}
+// Senha removida — login via Google
 
 async function salvarUrlSheets() {
   const input = document.getElementById('sheets-url');
